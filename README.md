@@ -1,16 +1,122 @@
-# React + Vite
+# AI-Powered Technical Interview Platform - Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+## 📌 Overview
 
-Currently, two official plugins are available:
+This repository contains the frontend of the AI-Powered Technical Interview Platform developed using React.js.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+The frontend provides an interactive interface for coding interviews, AI feedback, authentication, and interview history.
 
-## React Compiler
+---
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## 🚀 Features
 
-## Expanding the ESLint configuration
+- User Registration
+- User Login
+- Dashboard
+- Coding Editor
+- AI Feedback
+- Interview History
+- Responsive Design
+- Protected Routes
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+---
+
+## 🛠️ Tech Stack
+
+### Frontend
+
+- React.js
+- JavaScript
+- HTML
+- CSS
+
+### Libraries
+
+- Axios
+- React Router
+
+### Code Editor
+
+- Monaco Editor
+
+---
+
+## 📂 Project Structure
+
+src
+├── components
+├── pages
+├── services
+├── context
+├── assets
+└── App.js
+
+---
+
+## ⚙️ Installation
+
+Clone Repository
+
+```bash
+git clone https://github.com/pritamcodinghere-hash/your-frontend-repository.git
+```
+
+Move inside project
+
+```bash
+cd your-frontend-repository
+```
+
+Install Packages
+
+```bash
+npm install
+```
+
+Run Project
+
+```bash
+npm start
+```
+
+---
+
+## Pages
+
+- Login
+- Register
+- Dashboard
+- Coding Interview
+- AI Feedback
+- Interview History
+
+---
+
+## Backend Connection
+
+Update the backend URL inside Axios.
+
+Example
+
+```javascript
+http://localhost:8080
+```
+
+---
+
+## Future Improvements
+
+- Dark Mode
+- Live Video Interview
+- AI Voice Assistant
+- Profile Page
+- Real-time Notifications
+
+---
+
+## Author
+
+Pritam Singh
+
+GitHub:
+https://github.com/pritamcodinghere-hash
