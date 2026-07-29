@@ -2,22 +2,21 @@
 
 ## 📌 Overview
 
-This repository contains the frontend of the AI-Powered Technical Interview Platform developed using React.js.
-
-The frontend provides an interactive interface for coding interviews, AI feedback, authentication, and interview history.
+This repository contains the frontend of the **AI-Powered Technical Interview Platform** built using **React.js** and **Vite**. It provides an interactive platform where users can register, log in, take technical interviews, solve coding problems, receive AI-powered feedback, and analyze resumes.
 
 ---
 
 ## 🚀 Features
 
-- User Registration
-- User Login
-- Dashboard
-- Coding Editor
-- AI Feedback
-- Interview History
-- Responsive Design
-- Protected Routes
+- 🔐 User Registration & Login
+- 🛡️ JWT Authentication
+- 💻 Online Coding Editor (Monaco Editor)
+- 🤖 AI-Powered Interview Feedback
+- 📄 Resume Analyzer
+- 📊 Dashboard
+- 📝 Technical Interview Test
+- 📈 Interview Reports
+- 📱 Responsive User Interface
 
 ---
 
@@ -26,77 +25,67 @@ The frontend provides an interactive interface for coding interviews, AI feedbac
 ### Frontend
 
 - React.js
+- Vite
 - JavaScript
-- HTML
-- CSS
+- HTML5
+- CSS3
 
 ### Libraries
 
 - Axios
-- React Router
-
-### Code Editor
-
+- React Router DOM
 - Monaco Editor
 
 ---
 
 ## 📂 Project Structure
 
+```text
 src
 ├── components
 ├── pages
 ├── services
-├── context
 ├── assets
-└── App.js
+├── context
+├── App.jsx
+└── main.jsx
+```
 
 ---
 
 ## ⚙️ Installation
 
-Clone Repository
+### Clone Repository
 
 ```bash
-git clone https://github.com/pritamcodinghere-hash/your-frontend-repository.git
+git clone https://github.com/pritamcodinghere-hash/<your-frontend-repository>.git
 ```
 
-Move inside project
+### Move into Project
 
 ```bash
-cd your-frontend-repository
+cd <your-frontend-repository>
 ```
 
-Install Packages
+### Install Dependencies
 
 ```bash
 npm install
 ```
 
-Run Project
+### Run the Project
 
 ```bash
-npm start
+npm run dev
 ```
 
 ---
 
-## Pages
+## 🌐 Backend Configuration
 
-- Login
-- Register
-- Dashboard
-- Coding Interview
-- AI Feedback
-- Interview History
+Update the backend API URL inside your Axios configuration.
 
----
-
-## Backend Connection
-
-Update the backend URL inside Axios.
-
-Example
+Example:
 
 ```javascript
 http://localhost:8080
@@ -104,19 +93,86 @@ http://localhost:8080
 
 ---
 
-## Future Improvements
+## 📷 Screenshots
 
-- Dark Mode
-- Live Video Interview
-- AI Voice Assistant
-- Profile Page
-- Real-time Notifications
+### Login Page
+
+![Login Page](screenshots/login-page.png)
 
 ---
 
-## Author
+### Register Page
 
-Pritam Singh
+![Register Page](screenshots/register-page.png)
 
-GitHub:
-https://github.com/pritamcodinghere-hash
+---
+
+### Dashboard
+
+![Dashboard](screenshots/dashboard-page.png)
+
+---
+
+### Coding Page
+
+![Coding Page](screenshots/coding-page.png)
+
+---
+
+### Interview Page
+
+![Interview Page](screenshots/interview-page.png)
+
+---
+
+### Interview Test
+
+![Interview Test](screenshots/interview_test.png)
+
+---
+
+### Interview Report
+
+![Interview Report](screenshots/interview-report.png)
+
+---
+
+### Interview Report Page
+
+![Interview Report Page](screenshots/interview_report-page.png)
+
+---
+
+### Resume Analyzer
+
+![Resume Analyzer](screenshots/resume_analyzer-page.png)
+
+---
+
+### Test Report
+
+![Test Report](screenshots/test_report.png)
+
+---
+
+## 🚀 Future Improvements
+
+- 🎤 Voice-Based AI Interview
+- 🎥 Video Interview Support
+- 📊 Leaderboard
+- 👤 User Profile
+- 🌙 Dark Mode
+- 🔔 Real-Time Notifications
+
+---
+
+## 👨‍💻 Author
+
+**Pritam Singh**
+
+- GitHub: https://github.com/pritamcodinghere-hash
+
+
+---
+
+⭐ If you found this project useful, consider giving it a star!
