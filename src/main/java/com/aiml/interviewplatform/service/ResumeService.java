@@ -22,18 +22,32 @@ public class ResumeService {
     @Autowired
     private ResumeAnalysisRepository resumeAnalysisRepository;
 
-    public String analyzeResume(MultipartFile resume) throws Exception {
-
-        // Read PDF
-        InputStream inputStream = resume.getInputStream();
-
-        PDDocument document = PDDocument.load(inputStream);
-
-        PDFTextStripper stripper = new PDFTextStripper();
-
-        String resumeText = stripper.getText(document);
-
-        document.close();
+    public String analyzeResume(MultipartFile resume, String userEmail) throws Exception {
+        if (resume == null || resume.isEmpty()) {
+            throw new IllegalArgumentException("Resume file is required");
+        }
+        if (resume.getSize() > 10 * 1024 * 1024) {
+            throw new IllegalArgumentException("File too large. Max 10MB");
+        }
+        String originalName = resume.getOriginalFilename();
+        if (originalName != null && !originalName.toLowerCase().endsWith(".pdf")) {
+            // also check content type fallback
+            String ct = resume.getContentType();
+            if (ct != null && !ct.equals("application/pdf") && !ct.equals("application/octet-stream")) {
+                throw new IllegalArgumentException("Only PDF files allowed");
+            }
+        }
+        String resumeText;
+        try (InputStream inputStream = resume.getInputStream();
+             PDDocument document = PDDocument.load(inputStream)) {
+            PDFTextStripper stripper = new PDFTextStripper();
+            resumeText = stripper.getText(document);
+        }
+        if (resumeText == null || resumeText.trim().isEmpty()) {
+            throw new IllegalArgumentException("Could not extract text from PDF");
+        }
+        // Limit text to prevent token blowup (first 15000 chars)
+        if (resumeText.length() > 15000) resumeText = resumeText.substring(0, 15000);
 
         String prompt = """
 You are an ATS Resume Analyzer.
@@ -87,19 +101,12 @@ Resume:
         }
 
         ResumeAnalysis resumeAnalysis = new ResumeAnalysis();
-
-        resumeAnalysis.setEmail("demo@gmail.com");
-
+        resumeAnalysis.setEmail(userEmail != null ? userEmail : "unknown");
         resumeAnalysis.setResumeText(resumeText);
-
         resumeAnalysis.setAnalysis(analysis);
-
         resumeAnalysis.setAtsScore(atsScore);
-
         resumeAnalysis.setCreatedAt(LocalDateTime.now());
-
         resumeAnalysisRepository.save(resumeAnalysis);
-
         return analysis;
     }
 }

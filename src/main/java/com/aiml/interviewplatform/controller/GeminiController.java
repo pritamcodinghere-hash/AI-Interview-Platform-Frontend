@@ -2,101 +2,76 @@ package com.aiml.interviewplatform.controller;
 
 import com.aiml.interviewplatform.service.GeminiService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
 
 @RestController
 @RequestMapping("/api/gemini")
-@CrossOrigin(origins = "http://localhost:5173")
 public class GeminiController {
 
     @Autowired
     private GeminiService geminiService;
 
-    @PostMapping("/evaluate")
-    public String evaluate(@RequestBody Map<String, String> request) {
+    private String require(Map<String,String> req, String key) {
+        String v = req != null ? req.get(key) : null;
+        if (v == null || v.isBlank()) throw new IllegalArgumentException(key + " is required");
+        return v;
+    }
 
-        return geminiService.evaluateAnswer(
-                request.get("question"),
-                request.get("answer")
-        );
+    @PostMapping("/evaluate")
+    public ResponseEntity<?> evaluate(@RequestBody Map<String, String> request) {
+        try {
+            return ResponseEntity.ok(geminiService.evaluateAnswer(require(request,"question"), require(request,"answer")));
+        } catch (IllegalArgumentException e) { return ResponseEntity.badRequest().body(Map.of("message", e.getMessage())); }
     }
 
     @PostMapping("/code")
-    public String code(@RequestBody Map<String, String> request) {
-
-        return geminiService.evaluateCode(
-                request.get("question"),
-                request.get("code")
-        );
+    public ResponseEntity<?> code(@RequestBody Map<String, String> request) {
+        try { return ResponseEntity.ok(geminiService.evaluateCode(require(request,"question"), require(request,"code"))); }
+        catch (IllegalArgumentException e) { return ResponseEntity.badRequest().body(Map.of("message", e.getMessage())); }
     }
-
     @PostMapping("/explain")
-    public String explain(@RequestBody Map<String, String> request) {
-
-        return geminiService.explainCode(
-                request.get("code")
-        );
+    public ResponseEntity<?> explain(@RequestBody Map<String, String> request) {
+        try { return ResponseEntity.ok(geminiService.explainCode(require(request,"code"))); }
+        catch (IllegalArgumentException e) { return ResponseEntity.badRequest().body(Map.of("message", e.getMessage())); }
     }
-
-
-
     @PostMapping("/interview")
-    public String interview(@RequestBody Map<String, String> request) {
-
-        return geminiService.askInterviewQuestion(
-                request.get("email"),
-                request.get("answer")
-        );
+    public ResponseEntity<?> interview(@RequestBody Map<String, String> request, org.springframework.security.core.Authentication authentication) {
+        try {
+            String email = authentication != null ? authentication.getName() : require(request,"email");
+            return ResponseEntity.ok(geminiService.askInterviewQuestion(email, require(request,"answer")));
+        } catch (IllegalArgumentException e) { return ResponseEntity.badRequest().body(Map.of("message", e.getMessage())); }
     }
     @PostMapping("/optimize")
-    public String optimize(@RequestBody Map<String, String> request) {
-
-        return geminiService.optimizeCode(
-                request.get("code")
-        );
+    public ResponseEntity<?> optimize(@RequestBody Map<String, String> request) {
+        try { return ResponseEntity.ok(geminiService.optimizeCode(require(request,"code"))); }
+        catch (IllegalArgumentException e) { return ResponseEntity.badRequest().body(Map.of("message", e.getMessage())); }
     }
-
     @PostMapping("/bugs")
-    public String bugs(@RequestBody Map<String, String> request) {
-
-        return geminiService.findBugs(
-                request.get("code")
-        );
+    public ResponseEntity<?> bugs(@RequestBody Map<String, String> request) {
+        try { return ResponseEntity.ok(geminiService.findBugs(require(request,"code"))); }
+        catch (IllegalArgumentException e) { return ResponseEntity.badRequest().body(Map.of("message", e.getMessage())); }
     }
-
     @PostMapping("/testcases")
-    public String testCases(@RequestBody Map<String, String> request) {
-
-        return geminiService.generateTestCases(
-                request.get("code")
-        );
+    public ResponseEntity<?> testCases(@RequestBody Map<String, String> request) {
+        try { return ResponseEntity.ok(geminiService.generateTestCases(require(request,"code"))); }
+        catch (IllegalArgumentException e) { return ResponseEntity.badRequest().body(Map.of("message", e.getMessage())); }
     }
     @PostMapping("/complexity")
-    public String complexity(@RequestBody Map<String,String> request){
-
-        return geminiService.analyzeComplexity(
-                request.get("code")
-        );
-
+    public ResponseEntity<?> complexity(@RequestBody Map<String,String> request){
+        try { return ResponseEntity.ok(geminiService.analyzeComplexity(require(request,"code"))); }
+        catch (IllegalArgumentException e) { return ResponseEntity.badRequest().body(Map.of("message", e.getMessage())); }
     }
-
     @PostMapping("/dryrun")
-    public String dryRun(@RequestBody Map<String,String> request){
-
-        return geminiService.dryRunCode(
-                request.get("code")
-        );
-
+    public ResponseEntity<?> dryRun(@RequestBody Map<String,String> request){
+        try { return ResponseEntity.ok(geminiService.dryRunCode(require(request,"code"))); }
+        catch (IllegalArgumentException e) { return ResponseEntity.badRequest().body(Map.of("message", e.getMessage())); }
     }
-
     @PostMapping("/hint")
-    public String hint(@RequestBody Map<String,String> request){
-
-        return geminiService.generateHint(
-                request.get("code")
-        );
-
+    public ResponseEntity<?> hint(@RequestBody Map<String,String> request){
+        try { return ResponseEntity.ok(geminiService.generateHint(require(request,"code"))); }
+        catch (IllegalArgumentException e) { return ResponseEntity.badRequest().body(Map.of("message", e.getMessage())); }
     }
 }

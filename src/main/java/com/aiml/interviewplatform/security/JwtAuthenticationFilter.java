@@ -29,7 +29,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private CustomUserDetailsService userDetailsService;
 
     private Key getSigningKey() {
-        return Keys.hmacShaKeyFor(secret.getBytes());
+        return Keys.hmacShaKeyFor(secret.getBytes(java.nio.charset.StandardCharsets.UTF_8));
     }
 
     @Override
@@ -37,15 +37,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                                     HttpServletResponse response,
                                     FilterChain filterChain)
             throws ServletException, IOException {
-        System.out.println("==============================");
-        System.out.println("JWT FILTER EXECUTED");
-        System.out.println("Request: " + request.getMethod() + " " + request.getRequestURI());
-        System.out.println("==============================");
 
         String authHeader = request.getHeader("Authorization");
-        System.out.println("Method: " + request.getMethod());
-        System.out.println("URI: " + request.getRequestURI());
-        System.out.println("Header: " + authHeader);
 
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
             filterChain.doFilter(request, response);
@@ -63,7 +56,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     .getPayload();
 
             String email = claims.getSubject();
-            System.out.println("Email from Token: " + email);
 
             if (email != null &&
                     SecurityContextHolder.getContext().getAuthentication() == null) {
@@ -82,11 +74,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
                 SecurityContextHolder.getContext()
                         .setAuthentication(authentication);
-                System.out.println("Authentication Set Successfully");
             }
 
-        }catch (Exception e) {
-            e.printStackTrace();
+        } catch (Exception e) {
+            SecurityContextHolder.clearContext();
         }
 
         filterChain.doFilter(request, response);

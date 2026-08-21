@@ -16,38 +16,37 @@ public class InterviewAttemptController {
     private InterviewAttemptService attemptService;
 
     @PostMapping
-    public InterviewAttempt attemptInterview(
+    public org.springframework.http.ResponseEntity<?> attemptInterview(
             @RequestParam String interviewType,
             @RequestParam String question,
             @RequestParam String answer,
             @RequestParam String feedback,
             @RequestParam Integer score,
             Authentication authentication) {
-
+        if (authentication == null || authentication.getName() == null) return org.springframework.http.ResponseEntity.status(org.springframework.http.HttpStatus.UNAUTHORIZED).body(java.util.Map.of("message","Unauthorized"));
         String email = authentication.getName();
-
-        return attemptService.attemptInterview(
-                email,
-                interviewType,
-                question,
-                answer,
-                feedback,
-                score
-        );
+        return org.springframework.http.ResponseEntity.ok(attemptService.attemptInterview(email, interviewType, question, answer, feedback, score));
     }
 
     @GetMapping
-    public List<InterviewAttempt> getAllAttempts() {
-        return attemptService.getAllAttempts();
+    public org.springframework.http.ResponseEntity<?> getAllAttempts(Authentication authentication) {
+        if (authentication == null || authentication.getName() == null) return org.springframework.http.ResponseEntity.status(org.springframework.http.HttpStatus.UNAUTHORIZED).body(java.util.Map.of("message","Unauthorized"));
+        // Only return current user's attempts to prevent IDOR - admin can be added later with role check
+        return org.springframework.http.ResponseEntity.ok(attemptService.getUserAttempts(authentication.getName()));
     }
 
     @GetMapping("/{id}")
-    public InterviewAttempt getAttempt(@PathVariable Long id) {
-        return attemptService.getAttempt(id);
+    public org.springframework.http.ResponseEntity<?> getAttempt(@PathVariable Long id, Authentication authentication) {
+        if (authentication == null || authentication.getName() == null) return org.springframework.http.ResponseEntity.status(org.springframework.http.HttpStatus.UNAUTHORIZED).body(java.util.Map.of("message","Unauthorized"));
+        var attempt = attemptService.getAttempt(id);
+        if (attempt == null) return org.springframework.http.ResponseEntity.status(org.springframework.http.HttpStatus.NOT_FOUND).body(java.util.Map.of("message","Not found"));
+        if (!attempt.getUserEmail().equals(authentication.getName())) return org.springframework.http.ResponseEntity.status(org.springframework.http.HttpStatus.FORBIDDEN).body(java.util.Map.of("message","Forbidden"));
+        return org.springframework.http.ResponseEntity.ok(attempt);
     }
 
     @GetMapping("/my")
-    public List<InterviewAttempt> getMyAttempts(Authentication authentication) {
-        return attemptService.getUserAttempts(authentication.getName());
+    public org.springframework.http.ResponseEntity<?> getMyAttempts(Authentication authentication) {
+        if (authentication == null || authentication.getName() == null) return org.springframework.http.ResponseEntity.status(org.springframework.http.HttpStatus.UNAUTHORIZED).body(java.util.Map.of("message","Unauthorized"));
+        return org.springframework.http.ResponseEntity.ok(attemptService.getUserAttempts(authentication.getName()));
     }
 }

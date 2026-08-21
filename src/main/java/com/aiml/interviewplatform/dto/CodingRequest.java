@@ -1,8 +1,12 @@
 package com.aiml.interviewplatform.dto;
 
+import jakarta.validation.constraints.NotBlank;
+
 public class CodingRequest {
 
+    @NotBlank
     private String question;
+    @NotBlank
     private String code;
 
     public CodingRequest() {

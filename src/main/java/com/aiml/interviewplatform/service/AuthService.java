@@ -26,29 +26,42 @@ public class AuthService {
 
     // Register User
     public User register(RegisterRequest request) {
-
+        if (request == null || request.getEmail() == null || request.getPassword() == null || request.getFullName() == null) {
+            throw new IllegalArgumentException("Missing registration fields");
+        }
+        String email = request.getEmail().trim().toLowerCase();
+        if (userRepository.findByEmail(email).isPresent()) {
+            throw new IllegalArgumentException("Email already registered");
+        }
+        if (!email.matches("^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$")) {
+            throw new IllegalArgumentException("Invalid email format");
+        }
+        if (request.getPassword().length() < 6) {
+            throw new IllegalArgumentException("Password must be at least 6 characters");
+        }
         User user = new User();
-
-        user.setFullName(request.getFullName());
-        user.setEmail(request.getEmail());
+        user.setFullName(request.getFullName().trim());
+        user.setEmail(email);
         user.setPassword(passwordEncoder.encode(request.getPassword()));
         user.setRole("USER");
         user.setCreatedAt(LocalDateTime.now());
-
         return userRepository.save(user);
     }
 
     // Login User
     public AuthResponse login(LoginRequest request) {
-
-        User user = userRepository.findByEmail(request.getEmail()).orElse(null);
+        if (request == null || request.getEmail() == null || request.getPassword() == null) {
+            return new AuthResponse("Invalid request", null, null, null);
+        }
+        String email = request.getEmail().trim().toLowerCase();
+        User user = userRepository.findByEmail(email).orElse(null);
 
         if (user == null) {
-            return new AuthResponse("User Not Found", null, null, null);
+            return new AuthResponse("Invalid Email or Password", null, null, null);
         }
 
         if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
-            return new AuthResponse("Invalid Password", null, null, null);
+            return new AuthResponse("Invalid Email or Password", null, null, null);
         }
 
         // Generate JWT

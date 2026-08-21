@@ -23,7 +23,8 @@ public class GeminiService {
     @Autowired
     private InterviewSessionRepository sessionRepository;
 
-    private final RestTemplate restTemplate = new RestTemplate();
+    @Autowired
+    private RestTemplate restTemplate;
 
     // Free model fallback list
     private final List<String> MODELS = List.of(
@@ -184,66 +185,47 @@ public class GeminiService {
     }
     // ================= INTERVIEW =================
 
-    public String askInterviewQuestion(String email,
-                                       String answer) {
+    private String sanitize(String s) {
+        if (s == null) return "";
+        return s.replace("\n", " ").replace("\r", " ").substring(0, Math.min(s.length(), 5000)).trim();
+    }
 
-        InterviewSession session =
-                sessionRepository.findByUserEmail(email)
-                        .orElseGet(() -> {
-
-                            InterviewSession s =
-                                    new InterviewSession();
-
-                            s.setUserEmail(email);
-
-                            s.setConversation("");
-
-                            return s;
-
-                        });
-
-        String conversation =
-                session.getConversation();
+    public synchronized String askInterviewQuestion(String email, String answer) {
+        if (email == null || email.isBlank()) throw new IllegalArgumentException("Email required");
+        String safeAnswer = sanitize(answer);
+        InterviewSession session = sessionRepository.findByUserEmail(email).orElseGet(() -> {
+            InterviewSession s = new InterviewSession();
+            s.setUserEmail(email);
+            s.setConversation("");
+            return s;
+        });
+        String conversation = session.getConversation();
+        if (conversation == null) conversation = "";
+        // Prevent unbounded growth - keep last 8000 chars
+        if (conversation.length() > 8000) conversation = conversation.substring(conversation.length() - 8000);
         String prompt = """
 You are an experienced Java interviewer.
-
 Rules:
-
 1. Ask ONLY ONE interview question at a time.
-
 2. First evaluate the candidate's previous answer in 2-3 lines.
-
 3. Then ask the next question.
-
 4. Never use Markdown.
-
 5. Never use **, ###, bullet formatting, or code blocks.
-
 6. Return plain text only.
-
 7. Keep the response under 120 words.
-
 8. Cover Java, OOP, Collections, Multithreading, DSA, DBMS, OS and Computer Networks.
-
 Previous Conversation:
-
 """
                 + conversation
                 + "\n\nCandidate:\n"
-                + answer;
-
+                + safeAnswer;
         String reply = callAI(prompt);
-
-        conversation +=
-                "\nCandidate : " + answer;
-
-        conversation +=
-                "\nInterviewer : " + reply;
-
+        conversation += "\nCandidate : " + safeAnswer;
+        conversation += "\nInterviewer : " + reply;
+        // Hard limit TEXT column
+        if (conversation.length() > 15000) conversation = conversation.substring(conversation.length() - 15000);
         session.setConversation(conversation);
-
         sessionRepository.save(session);
-
         return reply;
     }
 

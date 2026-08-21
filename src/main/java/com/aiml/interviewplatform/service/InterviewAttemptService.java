@@ -44,9 +44,7 @@ public class InterviewAttemptService {
     }
 
     public List<InterviewAttempt> getUserAttempts(String userEmail) {
-        return attemptRepository.findAll()
-                .stream()
-                .filter(a -> a.getUserEmail().equals(userEmail))
-                .toList();
+        if (userEmail == null) return List.of();
+        return attemptRepository.findByUserEmail(userEmail);
     }
 }

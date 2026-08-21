@@ -63,6 +63,7 @@ public class Question {
     public void setCategory(String category) {
         this.category = category;
     }
+    @com.fasterxml.jackson.annotation.JsonIgnore
     @ManyToMany(mappedBy = "questions")
     private List<Interview> interviews = new ArrayList<>();
     public List<Interview> getInterviews() {

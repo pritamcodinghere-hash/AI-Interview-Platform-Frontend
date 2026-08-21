@@ -32,28 +32,26 @@ public class SecurityConfig {
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 
                 .authorizeHttpRequests(auth -> auth
-
                         // Public APIs
                         .requestMatchers(
                                 "/api/auth/**",
-                                "/api/compiler/**",
-                                "/api/submission/**",
-                                "/api/gemini/**",
-                                "/api/resume/**",
-                                "/api/report/**",
                                 "/h2-console/**"
                         ).permitAll()
-
-                        // Protected APIs
+                        // Protected APIs - require authentication
                         .requestMatchers(
                                 "/api/interview/**",
                                 "/api/questions/**",
                                 "/api/interviews/**",
                                 "/api/attempts/**",
                                 "/api/dashboard/**",
-                                "/api/coding/**"
-                        ).permitAll()
-
+                                "/api/coding/**",
+                                "/api/compiler/**",
+                                "/api/submission/**",
+                                "/api/gemini/**",
+                                "/api/resume/**",
+                                "/api/report/**",
+                                "/api/reports/**"
+                        ).authenticated()
                         .anyRequest().authenticated()
                 )
 

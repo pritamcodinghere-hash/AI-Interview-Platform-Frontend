@@ -14,22 +14,20 @@ public class QuestionController {
     @Autowired
     private QuestionService questionService;
 
-    // Add Question
     @PostMapping
-    public Question addQuestion(@RequestBody Question question) {
-        System.out.println("Controller Reached");
-
-        return questionService.addQuestion(question);
+    public org.springframework.http.ResponseEntity<?> addQuestion(@RequestBody Question question) {
+        return org.springframework.http.ResponseEntity.status(org.springframework.http.HttpStatus.CREATED).body(questionService.addQuestion(question));
     }
 
-    // Get All Questions
     @GetMapping
     public List<Question> getAllQuestions() {
         return questionService.getAllQuestions();
     }
     @GetMapping("/{id}")
-    public Question getQuestionById(@PathVariable Long id) {
-        return questionService.getQuestionById(id);
+    public org.springframework.http.ResponseEntity<?> getQuestionById(@PathVariable Long id) {
+        var q = questionService.getQuestionById(id);
+        if (q == null) return org.springframework.http.ResponseEntity.status(org.springframework.http.HttpStatus.NOT_FOUND).body(java.util.Map.of("message","Question not found"));
+        return org.springframework.http.ResponseEntity.ok(q);
     }
 
     // Get Questions By Category

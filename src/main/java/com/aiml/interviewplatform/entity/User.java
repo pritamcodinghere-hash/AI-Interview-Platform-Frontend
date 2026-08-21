@@ -1,10 +1,14 @@
 package com.aiml.interviewplatform.entity;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 
 import java.time.LocalDateTime;
 
@@ -15,9 +19,18 @@ public class User {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @NotBlank
+    @Size(min = 2, max = 100)
     private String fullName;
+
+    @NotBlank
+    @Email
+    @Column(unique = true, nullable = false)
     private String email;
+
+    @NotBlank
     private String password;
+
     private String role;
     private LocalDateTime createdAt;
     public Long getId(){

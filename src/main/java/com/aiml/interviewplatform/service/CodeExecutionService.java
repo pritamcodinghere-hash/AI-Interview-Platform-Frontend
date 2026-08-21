@@ -10,98 +10,60 @@ import java.nio.file.Path;
 public class CodeExecutionService {
 
     public String executeJava(String code, String input) {
-
+        if (code == null || code.isBlank()) return "Compilation Error\n\nNo code provided";
+        if (code.length() > 50000) return "Compilation Error\n\nCode too large";
+        if (input != null && input.length() > 5000) input = input.substring(0, 5000);
+        // Basic blocklist for dangerous operations (best-effort, not full sandbox)
+        String lower = code.toLowerCase();
+        if (lower.contains("runtime.getruntime().exec") || lower.contains("processbuilder") || lower.contains("system.exit") || lower.contains("delete(") || lower.contains("files.delete")) {
+            return "Security Error\n\nDisallowed operation detected";
+        }
+        Path tempDir = null;
         try {
-
-            // Create temporary folder
-            Path tempDir = Files.createTempDirectory("compiler");
-
-            // Create Solution.java
+            tempDir = Files.createTempDirectory("compiler");
             File javaFile = new File(tempDir.toFile(), "Solution.java");
-
             try (FileWriter writer = new FileWriter(javaFile)) {
                 writer.write(code);
             }
-
-            // ==========================
-            // Compile Java Code
-            // ==========================
-            ProcessBuilder compileBuilder =
-                    new ProcessBuilder(
-                            "javac",
-                            javaFile.getAbsolutePath()
-                    );
-
+            ProcessBuilder compileBuilder = new ProcessBuilder("javac", javaFile.getAbsolutePath());
+            compileBuilder.redirectErrorStream(false);
             Process compileProcess = compileBuilder.start();
-
-            compileProcess.waitFor();
-
-            String compileError =
-                    readStream(compileProcess.getErrorStream());
-
+            boolean compiled = compileProcess.waitFor(10, java.util.concurrent.TimeUnit.SECONDS);
+            if (!compiled) { compileProcess.destroyForcibly(); return "Compilation Error\n\nCompilation timed out (10s)"; }
+            String compileError = readStream(compileProcess.getErrorStream());
             if (!compileError.isBlank()) {
-
                 return "Compilation Error\n\n" + compileError;
-
             }
-
-            // ==========================
-            // Run Java Program
-            // ==========================
-            ProcessBuilder runBuilder =
-                    new ProcessBuilder(
-                            "java",
-                            "-cp",
-                            tempDir.toString(),
-                            "Solution"
-                    );
-
+            ProcessBuilder runBuilder = new ProcessBuilder("java", "-Xmx128m", "-cp", tempDir.toString(), "Solution");
+            runBuilder.redirectErrorStream(false);
             Process runProcess = runBuilder.start();
-
-            // ==========================
-            // Pass Custom Input
-            // ==========================
             if (input != null && !input.isBlank()) {
-
-                BufferedWriter writer =
-                        new BufferedWriter(
-                                new OutputStreamWriter(
-                                        runProcess.getOutputStream()
-                                )
-                        );
-
-                writer.write(input);
-                writer.newLine();
-
-                writer.flush();
-                writer.close();
-
+                try (BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(runProcess.getOutputStream()))) {
+                    writer.write(input);
+                    writer.newLine();
+                    writer.flush();
+                }
+            } else {
+                runProcess.getOutputStream().close();
             }
-
-            runProcess.waitFor();
-
-            String runtimeError =
-                    readStream(runProcess.getErrorStream());
-
+            boolean finished = runProcess.waitFor(5, java.util.concurrent.TimeUnit.SECONDS);
+            if (!finished) { runProcess.destroyForcibly(); return "Runtime Error\n\nExecution timed out (5s) - possible infinite loop"; }
+            String runtimeError = readStream(runProcess.getErrorStream());
             if (!runtimeError.isBlank()) {
-
                 return "Runtime Error\n\n" + runtimeError;
-
             }
-
-            String output =
-                    readStream(runProcess.getInputStream());
-
+            String output = readStream(runProcess.getInputStream());
+            if (output.length() > 10000) output = output.substring(0, 10000);
             return output.trim();
-
-        }
-
-        catch (Exception e) {
-
+        } catch (Exception e) {
             return "Exception\n\n" + e.getMessage();
-
+        } finally {
+            if (tempDir != null) {
+                try {
+                    Files.walk(tempDir).sorted(java.util.Comparator.reverseOrder()).map(Path::toFile).forEach(File::delete);
+                } catch (Exception ignored) {}
+            }
         }
-
     }
 
     // =====================================
