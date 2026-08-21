@@ -10,51 +10,40 @@ function Login() {
     const [password, setPassword] = useState("");
     const [message, setMessage] = useState("");
 
+    const [loading, setLoading] = useState(false);
+
     const login = async (e) => {
-
         e.preventDefault();
-
+        if (loading) return;
+        setLoading(true);
+        setMessage("");
         try {
-
-            const res = await api.post("/auth/login", {
-
-                email,
-                password
-
-            });
-
-            console.log(res.data);
-
+            const res = await api.post("/auth/login", { email, password });
             if (res.data.token) {
-
-                // Remove old token
-                localStorage.removeItem("token");
-
-                // Save new token
-                localStorage.setItem("token", res.data.token);
-
-                localStorage.setItem("email", res.data.email);
-
-                localStorage.setItem("name", res.data.fullName);
-
-                alert("Login Successful");
-
+                try {
+                    localStorage.setItem("token", res.data.token);
+                    localStorage.setItem("email", res.data.email || email);
+                    localStorage.setItem("name", res.data.fullName || email);
+                } catch {
+                    // storage failed
+                }
                 navigate("/dashboard");
-
             } else {
-
-                setMessage(res.data.message);
-
+                setMessage(res.data.message || "Login failed");
             }
-
         } catch (err) {
-
-            console.log(err);
-
-            setMessage("Invalid Email or Password");
-
+            const status = err.response?.status;
+            const serverMsg = err.response?.data?.message || err.response?.data;
+            if (status === 401 || status === 404) {
+                setMessage(typeof serverMsg === "string" ? serverMsg : "Invalid Email or Password");
+            } else if (!err.response) {
+                setMessage("Network error. Please check server.");
+            } else {
+                setMessage(typeof serverMsg === "string" ? serverMsg : "Login failed. Try again.");
+            }
+        } finally {
+            setLoading(false);
         }
-
     };
 
     return (
@@ -105,9 +94,10 @@ function Login() {
 
                                 <button
                                     className="btn btn-primary w-100"
-                                    type="submit">
+                                    type="submit"
+                                    disabled={loading}>
 
-                                    Login
+                                    {loading ? "Logging in..." : "Login"}
 
                                 </button>
 

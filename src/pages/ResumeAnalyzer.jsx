@@ -1,50 +1,44 @@
 import { useState } from "react";
-import axios from "axios";
+import api from "../services/api";
 
 function ResumeAnalyzer() {
-
     const [file, setFile] = useState(null);
     const [loading, setLoading] = useState(false);
     const [result, setResult] = useState("");
+    const [error, setError] = useState("");
 
     const uploadResume = async () => {
-
+        setError("");
         if (!file) {
-            alert("Please select a PDF Resume");
+            setError("Please select a PDF Resume");
             return;
         }
-
+        if (file.type !== "application/pdf" && !file.name.toLowerCase().endsWith(".pdf")) {
+            setError("Only PDF files are allowed");
+            return;
+        }
+        if (file.size > 10 * 1024 * 1024) {
+            setError("File too large. Max 10MB");
+            return;
+        }
         const formData = new FormData();
         formData.append("resume", file);
-
         try {
-
             setLoading(true);
-
-            const response = await axios.post(
-                "http://localhost:8080/api/resume/analyze",
-                formData,
-                {
-                    headers: {
-                        "Content-Type": "multipart/form-data"
-                    }
-                }
-            );
-
+            setResult("");
+            const response = await api.post("/resume/analyze", formData, {
+                headers: { "Content-Type": undefined },
+            });
             setResult(response.data);
-
         } catch (e) {
-
-            console.log(e);
-
-            alert("Resume Analysis Failed");
-
+            const status = e.response?.status;
+            if (status === 413) setError("File too large");
+            else if (status === 415) setError("Invalid file type. Please upload PDF");
+            else if (status === 401) setError("Unauthorized. Please login again");
+            else setError(e.response?.data?.message || e.response?.data || "Resume Analysis Failed");
         } finally {
-
             setLoading(false);
-
         }
-
     };
 
     return (
@@ -67,28 +61,27 @@ function ResumeAnalyzer() {
 
             <br />
 
-            <input
-                type="file"
-                accept=".pdf"
-                onChange={(e) => setFile(e.target.files[0])}
-            />
+            <input type="file" accept=".pdf" onChange={(e) => setFile(e.target.files[0])} />
 
             <br />
             <br />
+
+            {error && <div className="alert alert-danger">{typeof error === "string" ? error : JSON.stringify(error)}</div>}
 
             <button
                 onClick={uploadResume}
+                disabled={loading}
                 style={{
                     padding: "15px 35px",
                     border: "none",
                     borderRadius: "10px",
-                    background: "#2563eb",
+                    background: loading ? "#64748b" : "#2563eb",
                     color: "white",
-                    cursor: "pointer",
+                    cursor: loading ? "not-allowed" : "pointer",
                     fontSize: "18px"
                 }}
             >
-                Analyze Resume
+                {loading ? "Analyzing..." : "Analyze Resume"}
             </button>
 
             <br />

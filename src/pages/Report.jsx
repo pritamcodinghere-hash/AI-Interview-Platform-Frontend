@@ -7,26 +7,18 @@ function Report() {
     const [report, setReport] = useState(null);
     const [loading, setLoading] = useState(false);
 
+    const [error, setError] = useState("");
     const generateReport = async () => {
-
         setLoading(true);
-
+        setError("");
         try {
-
             const res = await api.post("/reports/generate");
-
             setReport(res.data);
-
         } catch (err) {
-
-            alert("Unable to generate report.");
-
-            console.log(err);
-
+            setError(err.response?.data?.message || err.response?.data || "Unable to generate report.");
+        } finally {
+            setLoading(false);
         }
-
-        setLoading(false);
-
     };
 
     useEffect(() => {
@@ -36,23 +28,17 @@ function Report() {
     }, []);
 
     const loadLatestReport = async () => {
-
         try {
-
             const res = await api.get("/reports");
-
-            if (res.data.length > 0) {
-
-                setReport(res.data[res.data.length - 1]);
-
+            if (Array.isArray(res.data) && res.data.length > 0) {
+                const sorted = [...res.data].sort((a, b) => new Date(a.createdAt || 0) - new Date(b.createdAt || 0));
+                setReport(sorted[sorted.length - 1]);
+            } else if (res.data && res.data.report) {
+                setReport(res.data);
             }
-
         } catch (err) {
-
-            console.log(err);
-
+            setError(err.response?.data?.message || "Failed to load reports");
         }
-
     };
 
     return (
@@ -73,14 +59,10 @@ function Report() {
 
             </div>
 
-            <button
-                className="btn btn-primary mb-4"
-                onClick={generateReport}>
-
-                Generate AI Report
-
+            <button className="btn btn-primary mb-4" onClick={generateReport} disabled={loading}>
+                {loading ? "Generating..." : "Generate AI Report"}
             </button>
-
+            {error && <div className="alert alert-danger">{typeof error === "string" ? error : JSON.stringify(error)}</div>}
             {loading && (
 
                 <div className="alert alert-warning">

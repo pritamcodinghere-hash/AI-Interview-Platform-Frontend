@@ -7,18 +7,15 @@ function ProblemPanel({ question, setQuestion }) {
     const [topic, setTopic] = useState("Java");
 
     const loadQuestion = () => {
-
-        const filtered = questions.filter(q => {
-
-            const topicMatch =
-                topic === "Java" || q.topic === topic;
-
-            return (
-                q.difficulty === difficulty &&
-                topicMatch
-            );
-
-        });
+        if (topic === "Java") {
+            // Java is a difficulty bucket, not a filter - use all topics
+            const filteredAll = questions.filter(q => q.difficulty === difficulty);
+            if (filteredAll.length === 0) { setQuestion("No question found."); return; }
+            const randomAll = filteredAll[Math.floor(Math.random() * filteredAll.length)];
+            setQuestion(randomAll);
+            return;
+        }
+        const filtered = questions.filter(q => q.difficulty === difficulty && q.topic === topic);
 
         if (filtered.length === 0) {
 
@@ -105,8 +102,8 @@ function ProblemPanel({ question, setQuestion }) {
                     <b>Constraints</b>
 
                     <ul>
-                        {question.constraints.map((c, i) => (
-                            <li key={i}>{c}</li>
+                        {question.constraints.map((c) => (
+                            <li key={c}>{c}</li>
                         ))}
                     </ul>
 

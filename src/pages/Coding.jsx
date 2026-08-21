@@ -55,12 +55,9 @@ function Coding() {
                 setInput={setInput}
             />
 
-            <FeedbackPanel />
-
+            <FeedbackPanel feedback={output} />
         </div>
-
     );
-
 }
 
 export default Coding;

@@ -11,11 +11,7 @@ function InterviewSetup() {
   const [questions, setQuestions] = useState(10);
 
   const startInterview = () => {
-
-    alert("Interview Starting...");
-
-    navigate("/interview");
-
+    navigate("/interview", { state: { role, experience, difficulty, questions: Number(questions) } });
   };
 
   return (

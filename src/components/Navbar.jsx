@@ -1,12 +1,25 @@
 import { FaBell, FaUserCircle, FaSignOutAlt } from "react-icons/fa";
 
-function Navbar() {
+import { useNavigate } from "react-router-dom";
 
-    const name = localStorage.getItem("name") || "Happy";
+function Navbar() {
+    let name = "Happy";
+    try {
+        name = localStorage.getItem("name") || "Happy";
+    } catch {
+        name = "Happy";
+    }
+    const navigate = useNavigate();
 
     const logout = () => {
-        localStorage.clear();
-        window.location.href = "/";
+        try {
+            localStorage.removeItem("token");
+            localStorage.removeItem("email");
+            localStorage.removeItem("name");
+        } catch {
+            // ignore
+        }
+        navigate("/", { replace: true });
     };
 
     return (

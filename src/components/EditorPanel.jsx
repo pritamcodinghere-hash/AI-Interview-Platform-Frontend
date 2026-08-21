@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import Editor from "@monaco-editor/react";
-import axios from "axios";
+import api from "../services/api";
 
 function EditorPanel({ setOutput, input }) {
 
@@ -24,83 +24,56 @@ public class Solution {
 }`;
 
     const [code, setCode] = useState(defaultCode);
+    const abortRef = useRef(null);
+    const [running, setRunning] = useState(false);
 
     const callAI = async (endpoint, loadingMessage) => {
-
+        if (running) return;
+        if (abortRef.current) abortRef.current.abort();
+        const controller = new AbortController();
+        abortRef.current = controller;
+        setRunning(true);
         try {
-
             setOutput(loadingMessage);
-
-            const response = await axios.post(
-                `http://localhost:8080/api/gemini/${endpoint}`,
-                {
-                    code
-                }
-            );
-
-            setOutput(response.data);
-
+            const response = await api.post(`/gemini/${endpoint}`, { code, language }, { signal: controller.signal, timeout: 30000 });
+            setOutput(typeof response.data === "string" ? response.data : JSON.stringify(response.data, null, 2));
         } catch (err) {
-
-            if (err.response) {
-
-                setOutput(err.response.data);
-
+            if (err.name === "CanceledError" || err.code === "ERR_CANCELED") {
+                setOutput("Request cancelled");
+            } else if (err.response) {
+                const data = err.response.data;
+                setOutput(typeof data === "string" ? data : JSON.stringify(data, null, 2));
             } else {
-
                 setOutput(err.message);
-
             }
-
+        } finally {
+            setRunning(false);
         }
-
     };
 
     const runCode = async () => {
-
+        if (running) return;
+        setRunning(true);
         try {
-
-            const response = await axios.post(
-                "http://localhost:8080/api/compiler/run",
-                {
-                    code,
-                    input
-                }
-            );
-
-            setOutput(
-                "🟢 Program Output\n\n" +
-                response.data.output
-            );
-
+            const response = await api.post("/compiler/run", { code, input, language }, { timeout: 15000 });
+            const out = response.data.output ?? response.data;
+            setOutput("🟢 Program Output\n\n" + (typeof out === "string" ? out : JSON.stringify(out, null, 2)));
         } catch (err) {
-
             if (err.response) {
-
-                setOutput(
-                    JSON.stringify(err.response.data, null, 2)
-                );
-
+                setOutput(JSON.stringify(err.response.data, null, 2));
             } else {
-
                 setOutput(err.message);
-
             }
-
+        } finally {
+            setRunning(false);
         }
-
     };
 
     const submitCode = async () => {
-
+        if (running) return;
+        setRunning(true);
         try {
-
-            const response = await axios.post(
-                "http://localhost:8080/api/submission",
-                {
-                    code
-                }
-            );
+            const response = await api.post("/submission", { code, language });
 
             let result = "";
 
@@ -130,21 +103,14 @@ Actual : ${test.actual}
             setOutput(result);
 
         } catch (err) {
-
             if (err.response) {
-
-                setOutput(
-                    JSON.stringify(err.response.data, null, 2)
-                );
-
+                setOutput(JSON.stringify(err.response.data, null, 2));
             } else {
-
                 setOutput(err.message);
-
             }
-
+        } finally {
+            setRunning(false);
         }
-
     };
         // ================= AI BUTTONS =================
 
@@ -210,17 +176,11 @@ Actual : ${test.actual}
                 </div>
 
                 <div className="editor-right">
-                    <button
-                        className="run-btn"
-                        onClick={runCode}
-                    >
-                        ▶ Run
+                    <button className="run-btn" onClick={runCode} disabled={running}>
+                        ▶ {running ? "..." : "Run"}
                     </button>
 
-                    <button
-                        className="submit-btn"
-                        onClick={submitCode}
-                    >
+                    <button className="submit-btn" onClick={submitCode} disabled={running}>
                         🚀 Submit
                     </button>
 

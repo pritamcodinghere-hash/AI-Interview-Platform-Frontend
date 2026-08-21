@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import axios from "axios";
+import api from "../services/api";
 
 import Navbar from "../components/Navbar";
 import StatsCard from "../components/StatsCard";
@@ -19,9 +19,12 @@ import {
 import "../styles/Dashboard.css";
 
 function Dashboard() {
-
-  const name = localStorage.getItem("name") || "Happy";
-  const token = localStorage.getItem("token");
+  let name = "Happy";
+  try {
+    name = localStorage.getItem("name") || "Happy";
+  } catch {
+    name = "Happy";
+  }
 
   const [stats, setStats] = useState({
     totalInterviews: 0,
@@ -30,34 +33,32 @@ function Dashboard() {
     resumes: 0,
     averageScore: 0,
   });
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     loadDashboard();
   }, []);
 
   const loadDashboard = async () => {
+    setLoading(true);
+    setError("");
     try {
-
-      const response = await axios.get(
-        "http://localhost:8080/api/dashboard/stats",
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-
+      const response = await api.get("/dashboard/stats");
       setStats(response.data);
-
     } catch (e) {
-      console.log(e);
+      const msg = e.response?.data?.message || e.response?.data || e.message || "Failed to load dashboard";
+      setError(typeof msg === "string" ? msg : JSON.stringify(msg));
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
     <div className="dashboard">
-
       <Navbar />
+      {error && <div className="alert alert-danger m-3">{error}</div>}
+      {loading && <div className="text-center p-3">Loading...</div>}
 
       <section className="hero">
         <h1>Welcome Back, {name} 👋</h1>

@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 
 import Login from "./pages/Login";
 import Register from "./pages/Register";
@@ -11,61 +11,73 @@ import Coding from "./pages/Coding";
 import Report from "./pages/Report";
 import CodingHistory from "./pages/CodingHistory";
 import ResumeAnalyzer from "./pages/ResumeAnalyzer";
+import ProtectedRoute from "./components/ProtectedRoute";
 
 function App() {
-  console.log("APP UPDATED");
-  console.log("ResumeAnalyzer =", ResumeAnalyzer);
   return (
     <BrowserRouter>
-
       <Routes>
-
         <Route path="/" element={<Login />} />
-
-        <Route
-          path="/register"
-          element={<Register />}
-        />
+        <Route path="/register" element={<Register />} />
 
         <Route
           path="/dashboard"
-          element={<Dashboard />}
+          element={
+            <ProtectedRoute>
+              <Dashboard />
+            </ProtectedRoute>
+          }
         />
-
-        {/* Interview Setup */}
         <Route
           path="/interview-setup"
-          element={<InterviewSetup />}
+          element={
+            <ProtectedRoute>
+              <InterviewSetup />
+            </ProtectedRoute>
+          }
         />
-
-        {/* Interview Session (existing page for now) */}
         <Route
           path="/interview"
-          element={<Interview />}
+          element={
+            <ProtectedRoute>
+              <Interview />
+            </ProtectedRoute>
+          }
         />
-
         <Route
           path="/coding"
-          element={<Coding />}
+          element={
+            <ProtectedRoute>
+              <Coding />
+            </ProtectedRoute>
+          }
         />
-
         <Route
           path="/coding-history"
-          element={<CodingHistory />}
+          element={
+            <ProtectedRoute>
+              <CodingHistory />
+            </ProtectedRoute>
+          }
         />
-
         <Route
           path="/report"
-          element={<Report />}
+          element={
+            <ProtectedRoute>
+              <Report />
+            </ProtectedRoute>
+          }
         />
-
         <Route
-    path="/resume"
-    element={<ResumeAnalyzer />}
-/>
-
+          path="/resume"
+          element={
+            <ProtectedRoute>
+              <ResumeAnalyzer />
+            </ProtectedRoute>
+          }
+        />
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
-
     </BrowserRouter>
   );
 }

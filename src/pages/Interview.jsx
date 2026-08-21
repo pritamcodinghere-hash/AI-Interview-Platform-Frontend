@@ -1,9 +1,13 @@
-import { useState, useEffect } from "react";
-import axios from "axios";
+import { useState, useEffect, useRef } from "react";
+import { useLocation } from "react-router-dom";
+import api from "../services/api";
 
 function Interview() {
-
-    const [email, setEmail] = useState("");
+    const location = useLocation();
+    const setup = location.state || {};
+    const [email, setEmail] = useState(() => {
+        try { return localStorage.getItem("email") || ""; } catch { return ""; }
+    });
 
     const [answer, setAnswer] = useState("");
 
@@ -17,11 +21,10 @@ function Interview() {
 
     const [questionNumber, setQuestionNumber] = useState(1);
 
-    const totalQuestions = 10;
-
-    const [domain] = useState("Java");
-
-    const [difficulty] = useState("Medium");
+    const [domain] = useState(setup.role || "Java");
+    const [difficulty] = useState(setup.difficulty || "Medium");
+    // totalQuestions already defined above via setup, fallback 10 if not set
+    const effectiveTotal = setup.questions || 10;
 
     const [seconds, setSeconds] = useState(0);
 
@@ -40,17 +43,12 @@ function Interview() {
     const [suggestions, setSuggestions] = useState("");
 
     const [report, setReport] = useState(null);
+    const [interviewError, setInterviewError] = useState("");
+    const timerRef = useRef(null);
 
     useEffect(() => {
-
-        const timer = setInterval(() => {
-
-            setSeconds(prev => prev + 1);
-
-        }, 1000);
-
-        return () => clearInterval(timer);
-
+        timerRef.current = setInterval(() => setSeconds(prev => prev + 1), 1000);
+        return () => { if (timerRef.current) clearInterval(timerRef.current); };
     }, []);
 
     const formatTime = () => {
@@ -63,126 +61,62 @@ function Interview() {
 
     };
     const askQuestion = async () => {
-
-    if (!email) {
-        alert("Please enter your email.");
+    setInterviewError("");
+    const storedEmail = (() => { try { return localStorage.getItem("email"); } catch { return null; }})();
+    const effectiveEmail = (email || storedEmail || "").trim();
+    if (!effectiveEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(effectiveEmail)) {
+        setInterviewError("Please enter a valid email. Login email will be used.");
         return;
     }
-
+    if (effectiveEmail !== email) setEmail(effectiveEmail);
     if (!answer.trim()) {
-        alert("Please enter your answer.");
+        setInterviewError("Please enter your answer.");
         return;
     }
-
     try {
-
         setThinking(true);
-
         const currentAnswer = answer;
-
-        const chatResponse = await axios.post(
-            "http://localhost:8080/api/interview/chat",
-            {
-                message: currentAnswer
-            },
-            {
-                headers: {
-                    Authorization: "Bearer " + localStorage.getItem("token")
-                }
-            }
-        );
-
-        console.log("FULL RESPONSE :", chatResponse.data);
-
-        // ✅ FIXED HERE
-        const aiReply = chatResponse.data.reply;
-
-        setConversation(prev => [
-            ...prev,
-            {
-                sender: "You",
-                message: currentAnswer
-            },
-            {
-                sender: "AI",
-                message: aiReply
-            }
-        ]);
-
-        const evaluationResponse = await axios.post(
-            "http://localhost:8080/api/interview/evaluate",
-            {
-                question: aiReply,
-                answer: currentAnswer
-            }
-        );
-
+        const chatResponse = await api.post("/interview/chat", { message: currentAnswer });
+        const aiReply = chatResponse.data.reply || chatResponse.data.response || chatResponse.data.message || "No reply";
+        setConversation(prev => [...prev, { sender: "You", message: currentAnswer }, { sender: "AI", message: aiReply }]);
+        const evaluationResponse = await api.post("/interview/evaluate", { question: aiReply, answer: currentAnswer });
         const evaluation = evaluationResponse.data;
-
-        setTechnicalScore(evaluation.technicalScore);
-        setCommunicationScore(evaluation.communicationScore);
-        setConfidenceScore(evaluation.confidenceScore);
-
-        setStrengths(evaluation.strengths);
-        setWeaknesses(evaluation.weaknesses);
-        setSuggestions(evaluation.suggestions);
-
+        setTechnicalScore(evaluation.technicalScore ?? 0);
+        setCommunicationScore(evaluation.communicationScore ?? 0);
+        setConfidenceScore(evaluation.confidenceScore ?? 0);
+        setStrengths(evaluation.strengths || "");
+        setWeaknesses(evaluation.weaknesses || "");
+        setSuggestions(evaluation.suggestions || "");
         setQuestionNumber(prev => prev + 1);
-
         setAnswer("");
-
-        setThinking(false);
-
     } catch (e) {
-
-        console.log(e);
-
+        const msg = e.response?.data?.message || e.response?.data || e.message || "Interview Failed";
+        setInterviewError(typeof msg === "string" ? msg : JSON.stringify(msg));
+    } finally {
         setThinking(false);
-
-        alert("Interview Failed");
-
     }
-
 };
 
     const finishInterview = async () => {
-
-        const overall = Math.floor(
-            (
-                technicalScore +
-                communicationScore +
-                confidenceScore
-            ) / 3
-        );
-
+        if (timerRef.current) clearInterval(timerRef.current);
+        const overall = Math.round((technicalScore + communicationScore + confidenceScore) / 3);
+        const effectiveEmail = (() => { try { return email || localStorage.getItem("email") || ""; } catch { return email; }})();
         const reportData = {
-
-            email,
-
-            domain,
-
-            difficulty,
-
-            technicalScore,
-
-            communicationScore,
-
-            confidenceScore,
-
-            overallScore: overall,
-
-            strengths,
-
-            weaknesses,
-
-            suggestions
-
+            email: effectiveEmail, domain, difficulty, technicalScore, communicationScore, confidenceScore, overallScore: overall, strengths, weaknesses, suggestions
         };
-
-       // Report saving will be added later.
-
+        try {
+            await api.post("/reports/generate", reportData);
+        } catch {
+            // fallback: still show local report if backend not available
+        }
+        try {
+            const existing = JSON.parse(localStorage.getItem("interview_reports") || "[]");
+            existing.push({ ...reportData, createdAt: new Date().toISOString() });
+            localStorage.setItem("interview_reports", JSON.stringify(existing));
+        } catch {
+            // ignore
+        }
         setReport(reportData);
-
     };
         return (
 
@@ -236,48 +170,13 @@ function Interview() {
                 </div>
 
                 <h3>
-
-                    Question {questionNumber} / {totalQuestions}
-
+                    Question {questionNumber} / {effectiveTotal}
                 </h3>
-
-                <div
-                    style={{
-                        width: "100%",
-                        height: "15px",
-                        background: "#334155",
-                        borderRadius: "10px",
-                        marginBottom: "25px"
-                    }}
-                >
-
-                    <div
-                        style={{
-                            width: `${(questionNumber / totalQuestions) * 100}%`,
-                            height: "15px",
-                            background: "#22c55e",
-                            borderRadius: "10px"
-                        }}
-                    />
-
+                <div style={{ width: "100%", height: "15px", background: "#334155", borderRadius: "10px", marginBottom: "25px" }}>
+                    <div style={{ width: `${(questionNumber / effectiveTotal) * 100}%`, height: "15px", background: "#22c55e", borderRadius: "10px" }} />
                 </div>
-
-                <input
-                    type="email"
-                    placeholder="📧 Enter your email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    style={{
-                        width: "100%",
-                        padding: "15px",
-                        fontSize: "18px",
-                        borderRadius: "12px",
-                        border: "1px solid #334155",
-                        background: "#1e293b",
-                        color: "white",
-                        marginBottom: "20px"
-                    }}
-                />
+                {interviewError && <div className="alert alert-danger">{interviewError}</div>}
+                <input type="email" placeholder="📧 Enter your email" value={email} readOnly style={{ width: "100%", padding: "15px", fontSize: "18px", borderRadius: "12px", border: "1px solid #334155", background: "#1e293b", color: "white", marginBottom: "20px", opacity: 0.8 }} title="Email from login, cannot be changed" />
 
                 <div
                     style={{
@@ -509,15 +408,7 @@ function Interview() {
                         <h3>⭐ Overall</h3>
 
                         <h1>
-
-                            {Math.floor(
-                                (
-                                    technicalScore +
-                                    communicationScore +
-                                    confidenceScore
-                                ) / 3
-                            )}/10
-
+                            {Math.round((technicalScore + communicationScore + confidenceScore) / 3)}/10
                         </h1>
 
                     </div>
