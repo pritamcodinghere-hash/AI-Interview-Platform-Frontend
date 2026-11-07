@@ -11,6 +11,8 @@ import Coding from "./pages/Coding";
 import Report from "./pages/Report";
 import CodingHistory from "./pages/CodingHistory";
 import ResumeAnalyzer from "./pages/ResumeAnalyzer";
+import Learn from "./pages/Learn";
+import WeeklyTest from "./pages/WeeklyTest";
 import ProtectedRoute from "./components/ProtectedRoute";
 
 function App() {
@@ -73,6 +75,22 @@ function App() {
           element={
             <ProtectedRoute>
               <ResumeAnalyzer />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/learn"
+          element={
+            <ProtectedRoute>
+              <Learn />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/weekly-test"
+          element={
+            <ProtectedRoute>
+              <WeeklyTest />
             </ProtectedRoute>
           }
         />

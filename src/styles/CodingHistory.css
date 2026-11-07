@@ -1,0 +1,131 @@
+/* ================================
+   CODING HISTORY — CARDS
+================                */
+
+.attempt-card {
+    background: rgba(15, 23, 42, 0.55);
+    border: 1px solid rgba(148, 163, 184, 0.12);
+    border-radius: 14px;
+    padding: 18px;
+    margin-bottom: 14px;
+}
+
+.attempt-card.completed {
+    border-left: 3px solid #22c55e;
+}
+
+.attempt-card.failed {
+    border-left: 3px solid #ef4444;
+}
+
+.attempt-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+
+.attempt-head h3 {
+    font-size: 15px;
+    color: #f1f5f9;
+    margin: 0;
+}
+
+.attempt-score {
+    font-size: 22px;
+    font-weight: 700;
+    color: #38bdf8;
+}
+
+.attempt-score small {
+    font-size: 12px;
+    color: #94a3b8;
+}
+
+.attempt-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+.attempt-cell {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.attempt-cell span {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: #94a3b8;
+}
+
+.attempt-cell strong {
+    font-size: 13px;
+    color: #e2e8f0;
+}
+
+.problem-block {
+    margin: 10px 0 6px;
+    font-size: 13px;
+    color: #cbd5e1;
+}
+
+.pre-wrap {
+    white-space: pre-wrap;
+    font-size: 12px;
+    color: #94a3b8;
+    background: rgba(15, 23, 42, 0.5);
+    border-radius: 8px;
+    padding: 10px;
+    margin: 0;
+    max-height: 160px;
+    overflow-y: auto;
+}
+
+.loading-block {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 40px;
+    color: #94a3b8;
+    font-size: 14px;
+}
+
+.spinner {
+    width: 22px;
+    height: 22px;
+    border: 3px solid rgba(148, 163, 184, 0.2);
+    border-top-color: #38bdf8;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+.empty-state {
+    text-align: center;
+    padding: 50px 20px;
+}
+
+.empty-icon {
+    font-size: 48px;
+    margin-bottom: 12px;
+}
+
+.empty-state h3 {
+    font-size: 18px;
+    color: #f1f5f9;
+    margin: 0 0 8px;
+}
+
+.empty-state p {
+    font-size: 14px;
+    color: #94a3b8;
+}

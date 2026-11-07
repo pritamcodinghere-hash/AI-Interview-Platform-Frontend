@@ -1,47 +1,21 @@
-function RecentActivity() {
-
-    const activities = [
-
-        "🎤 Completed HR Interview",
-
-        "💻 Solved Two Sum",
-
-        "📊 AI Score: 92%",
-
-        "📄 Report Generated",
-
-        "🧠 Practiced OOPS Questions"
-
-    ];
+function RecentActivity({ activities }) {
+    const items = activities && activities.length
+        ? activities
+        : [{ dot: "", text: "No activity yet — start practicing!" }];
 
     return (
-
         <div className="activity-card">
-
             <h2>📅 Recent Activity</h2>
-
             <ul>
-
-                {
-
-                    activities.map((item,index)=>(
-
-                        <li key={index}>
-
-                            {item}
-
-                        </li>
-
-                    ))
-
-                }
-
+                {items.map((item, index) => (
+                    <li key={index}>
+                        <span className={`activity-dot ${item.color || item.dot || ""}`} />
+                        {item.icon ? `${item.icon} ` : ""}{item.text}
+                    </li>
+                ))}
             </ul>
-
         </div>
-
     );
-
 }
 
 export default RecentActivity;

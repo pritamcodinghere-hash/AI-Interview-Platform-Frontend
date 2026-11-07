@@ -1,7 +1,7 @@
 import { Navigate } from "react-router-dom";
 
 function ProtectedRoute({ children }) {
-  let token = null;
+  let token;
   try {
     token = localStorage.getItem("token");
   } catch {

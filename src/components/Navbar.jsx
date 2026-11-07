@@ -1,15 +1,26 @@
-import { FaBell, FaUserCircle, FaSignOutAlt } from "react-icons/fa";
+import { FaBell, FaSignOutAlt } from "react-icons/fa";
 
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link, useLocation } from "react-router-dom";
+
+const LINKS = [
+    { to: "/dashboard", label: "Dashboard" },
+    { to: "/interview", label: "Interview" },
+    { to: "/coding", label: "Coding" },
+    { to: "/report", label: "Reports" },
+    { to: "/resume", label: "Resume" },
+];
 
 function Navbar() {
-    let name = "Happy";
+    let name;
     try {
-        name = localStorage.getItem("name") || "Happy";
+        name = localStorage.getItem("name") || "Guest";
     } catch {
-        name = "Happy";
+        name = "Guest";
     }
     const navigate = useNavigate();
+    const location = useLocation();
+
+    const initial = (name.trim()[0] || "G").toUpperCase();
 
     const logout = () => {
         try {
@@ -26,30 +37,63 @@ function Navbar() {
 
         <nav className="navbar">
 
-            <div className="logo">
-                🤖 AI Interview Platform
+            <div className="nav-left">
+
+                <Link to="/dashboard" className="logo">
+
+                    <span className="logo-badge">🤖</span>
+
+                    AI Interview Platform
+
+                </Link>
+
+                <div className="nav-links">
+
+                    {LINKS.map((link) => (
+
+                        <Link
+                            key={link.to}
+                            to={link.to}
+                            className={`nav-link${location.pathname === link.to ? " active" : ""}`}
+                        >
+
+                            {link.label}
+
+                        </Link>
+
+                    ))}
+
+                </div>
+
             </div>
 
             <div className="nav-right">
 
-                <FaBell className="nav-icon"/>
+                <button className="nav-icon" aria-label="Notifications" type="button">
 
-                <div className="profile">
+                    <FaBell />
 
-                    <FaUserCircle/>
+                </button>
+
+                <div className="profile" title={name}>
+
+                    <span className="avatar">{initial}</span>
 
                     <span>{name}</span>
 
                 </div>
 
                 <button
+
                     className="logout-btn"
+
                     onClick={logout}
+
                 >
 
                     <FaSignOutAlt/>
 
-                    Logout
+                    <span>Logout</span>
 
                 </button>
 

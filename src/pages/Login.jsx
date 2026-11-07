@@ -2,6 +2,8 @@ import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import api from "../services/api";
 
+import "../styles/Auth.css";
+
 function Login() {
 
     const navigate = useNavigate();
@@ -48,90 +50,179 @@ function Login() {
 
     return (
 
-        <div className="container mt-5">
+        <div className="auth-page">
 
-            <div className="row justify-content-center">
+            <aside className="auth-hero">
 
-                <div className="col-md-5">
+                <span className="auth-orb orb-1" />
+                <span className="auth-orb orb-2" />
 
-                    <div className="card shadow">
+                <div className="auth-brand">
 
-                        <div className="card-body">
+                    <span className="logo-badge">🤖</span>
 
-                            <h2 className="text-center mb-4">
-                                AI Interview Platform
-                            </h2>
+                    AI Interview Platform
 
-                            <form onSubmit={login}>
+                </div>
 
-                                <div className="mb-3">
+                <div className="auth-hero-content">
 
-                                    <label>Email</label>
+                    <h1>
 
-                                    <input
-                                        type="email"
-                                        className="form-control"
-                                        value={email}
-                                        onChange={(e) => setEmail(e.target.value)}
-                                        required
-                                    />
+                        Crack your next
 
-                                </div>
+                        <br />
 
-                                <div className="mb-3">
+                        <span className="grad-text">interview with AI.</span>
 
-                                    <label>Password</label>
+                    </h1>
 
-                                    <input
-                                        type="password"
-                                        className="form-control"
-                                        value={password}
-                                        onChange={(e) => setPassword(e.target.value)}
-                                        required
-                                    />
+                    <p>
 
-                                </div>
+                        Practice mock interviews, solve DSA problems and get
 
-                                <button
-                                    className="btn btn-primary w-100"
-                                    type="submit"
-                                    disabled={loading}>
+                        instant AI feedback on your resume — all in one place.
 
-                                    {loading ? "Logging in..." : "Login"}
+                    </p>
 
-                                </button>
+                    <ul className="auth-points">
 
-                            </form>
+                        <li>
 
-                            {message && (
+                            <span className="pt-icon">🎤</span>
 
-                                <div className="alert alert-danger mt-3">
+                            Live AI mock interviews with real-time scoring
 
-                                    {message}
+                        </li>
 
-                                </div>
+                        <li>
 
-                            )}
+                            <span className="pt-icon">💻</span>
 
-                            <div className="text-center mt-3">
+                            Coding arena with AI explain, debug and hints
 
-                                Don't have an account?
+                        </li>
 
-                                <Link to="/register">
+                        <li>
 
-                                    Register
+                            <span className="pt-icon">📄</span>
 
-                                </Link>
+                            Resume ATS analysis with hiring suggestions
+
+                        </li>
+
+                    </ul>
+
+                </div>
+
+                <div className="auth-hero-footer">
+
+                    <span className="live-dot" />
+
+                    Spring Boot + React + OpenRouter AI
+
+                </div>
+
+            </aside>
+
+            <main className="auth-form-side">
+
+                <div className="auth-card">
+
+                    <span className="auth-kicker">✦ Welcome back</span>
+
+                    <h2>Sign in</h2>
+
+                    <p className="auth-sub">
+
+                        Enter your credentials to access your dashboard.
+
+                    </p>
+
+                    <form onSubmit={login}>
+
+                        <div className="field">
+
+                            <label htmlFor="login-email">Email</label>
+
+                            <input
+                                id="login-email"
+                                type="email"
+                                placeholder="you@example.com"
+                                value={email}
+                                onChange={(e) => setEmail(e.target.value)}
+                                required
+                            />
+
+                        </div>
+
+                        <div className="field">
+
+                            <label htmlFor="login-password">Password</label>
+
+                            <input
+                                id="login-password"
+                                type="password"
+                                placeholder="••••••••"
+                                value={password}
+                                onChange={(e) => setPassword(e.target.value)}
+                                required
+                            />
+
+                        </div>
+
+                        {message && (
+
+                            <div className="alert alert-danger-custom auth-alert">
+
+                                {message}
 
                             </div>
 
-                        </div>
+                        )}
+
+                        <button
+                            className="btn-grad btn-block auth-submit"
+                            type="submit"
+                            disabled={loading}>
+
+                            {loading ? (
+
+                                <>
+
+                                    <span className="btn-spinner" />
+
+                                    Signing in...
+
+                                </>
+
+                            ) : (
+
+                                "Sign in →"
+
+                            )}
+
+                        </button>
+
+                    </form>
+
+                    <div className="auth-divider">New here?</div>
+
+                    <div className="auth-switch">
+
+                        Don&apos;t have an account?{" "}
+
+                        <Link to="/register">
+
+                            Create one free
+
+                        </Link>
 
                     </div>
 
                 </div>
 
-            </div>
+            </main>
 
         </div>
 
