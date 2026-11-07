@@ -90,14 +90,14 @@ Environment variables:
 
 H2 file database is created automatically at `backend/data/interviewdb` on first run.
 
-### Frontend (port 5173 by default)
+### Frontend (port 8000 — configured in `vite.config.js`)
 
 ```bash
 npm install
 npm run dev
 ```
 
-Open http://localhost:5173, click **Create one free**, register, and start practicing. The dev server proxies `/api` → `http://localhost:8080` (see `vite.config.js`); set `VITE_API_URL` to override the API origin.
+Open http://localhost:8000, click **Create one free**, register, and start practicing. The dev server proxies `/api` → `http://localhost:8080` (see `vite.config.js`); set `VITE_API_URL` to override the API origin.
 
 > Without `OPENROUTER_API_KEY`, the app still runs fully — code execution/grading work offline; every AI feature is disabled gracefully (or the interview falls back to voice-only/offline mode). Set the key to unlock the whole thing.
 
