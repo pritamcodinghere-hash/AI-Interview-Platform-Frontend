@@ -1,5 +1,6 @@
 package com.aiml.interviewplatform.controller;
 
+import com.aiml.interviewplatform.dto.DashboardOverview;
 import com.aiml.interviewplatform.dto.DashboardStats;
 import com.aiml.interviewplatform.service.DashboardService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,5 +27,14 @@ public class DashboardController {
         }
         DashboardStats stats = dashboardService.getDashboardStats(authentication.getName());
         return ResponseEntity.ok(stats);
+    }
+
+    @GetMapping("/overview")
+    public ResponseEntity<?> getOverview(Authentication authentication) {
+        if (authentication == null || authentication.getName() == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("message", "Unauthorized"));
+        }
+        DashboardOverview overview = dashboardService.getOverview(authentication.getName());
+        return ResponseEntity.ok(overview);
     }
 }

@@ -41,7 +41,7 @@ public class GeminiController {
     public ResponseEntity<?> interview(@RequestBody Map<String, String> request, org.springframework.security.core.Authentication authentication) {
         try {
             String email = authentication != null ? authentication.getName() : require(request,"email");
-            return ResponseEntity.ok(geminiService.askInterviewQuestion(email, require(request,"answer")));
+            return ResponseEntity.ok(geminiService.askInterviewQuestion(email, require(request,"answer"), null, null, null, request.get("topics")));
         } catch (IllegalArgumentException e) { return ResponseEntity.badRequest().body(Map.of("message", e.getMessage())); }
     }
     @PostMapping("/optimize")
@@ -60,8 +60,14 @@ public class GeminiController {
         catch (IllegalArgumentException e) { return ResponseEntity.badRequest().body(Map.of("message", e.getMessage())); }
     }
     @PostMapping("/complexity")
-    public ResponseEntity<?> complexity(@RequestBody Map<String,String> request){
+    public ResponseEntity<?> complexity(@RequestBody Map<String, String> request) {
         try { return ResponseEntity.ok(geminiService.analyzeComplexity(require(request,"code"))); }
+        catch (IllegalArgumentException e) { return ResponseEntity.badRequest().body(Map.of("message", e.getMessage())); }
+    }
+
+    @PostMapping("/complexity-only")
+    public ResponseEntity<?> complexityOnly(@RequestBody Map<String, String> request) {
+        try { return ResponseEntity.ok(geminiService.complexityOnly(require(request,"code"))); }
         catch (IllegalArgumentException e) { return ResponseEntity.badRequest().body(Map.of("message", e.getMessage())); }
     }
     @PostMapping("/dryrun")

@@ -20,6 +20,9 @@ public class ResumeService {
     private GeminiService geminiService;
 
     @Autowired
+    private OfflineCodeService offlineCodeService;
+
+    @Autowired
     private ResumeAnalysisRepository resumeAnalysisRepository;
 
     public String analyzeResume(MultipartFile resume, String userEmail) throws Exception {
@@ -84,8 +87,12 @@ Resume:
 
 """ + resumeText;
 
-        // Ask AI
+        // Ask AI (falls back to offline ATS-style analysis when unavailable)
         String analysis = geminiService.analyzeResume(prompt);
+
+        if (analysis == null || analysis.isBlank()) {
+            analysis = offlineCodeService.analyzeResume(resumeText);
+        }
 
         int atsScore = 0;
 

@@ -6,11 +6,21 @@ public class InterviewEvaluation {
     private int communicationScore;
     private int confidenceScore;
 
+    private String verdict;
     private String strengths;
     private String weaknesses;
     private String suggestions;
+    private String correctAnswer;
 
     public InterviewEvaluation(){}
+
+    public String getVerdict() {
+        return verdict;
+    }
+
+    public void setVerdict(String verdict) {
+        this.verdict = verdict;
+    }
 
     public int getTechnicalScore() {
         return technicalScore;
@@ -58,5 +68,13 @@ public class InterviewEvaluation {
 
     public void setSuggestions(String suggestions) {
         this.suggestions = suggestions;
+    }
+
+    public String getCorrectAnswer() {
+        return correctAnswer;
+    }
+
+    public void setCorrectAnswer(String correctAnswer) {
+        this.correctAnswer = correctAnswer;
     }
 }

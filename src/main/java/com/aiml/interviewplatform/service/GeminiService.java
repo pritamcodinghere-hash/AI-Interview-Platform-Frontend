@@ -1,5 +1,6 @@
 package com.aiml.interviewplatform.service;
 
+import com.aiml.interviewplatform.dto.InterviewEvaluation;
 import com.aiml.interviewplatform.entity.InterviewSession;
 import com.aiml.interviewplatform.repository.InterviewSessionRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,17 +27,90 @@ public class GeminiService {
     @Autowired
     private RestTemplate restTemplate;
 
-    // Free model fallback list
+    @Autowired
+    private OfflineInterviewService offlineInterviewService;
+
+    @Autowired
+    private OfflineCodeService offlineCodeService;
+
+    // Free model fallback list (verified against https://openrouter.ai/api/v1/models)
     private final List<String> MODELS = List.of(
 
-            "poolside/laguna-xs-2.1:free",
-            "meta-llama/llama-3.1-8b-instruct:free",
-            "deepseek/deepseek-r1:free",
-            "qwen/qwen3-coder:free"
+            "google/gemma-4-31b-it:free",
+            "nvidia/nemotron-3-super-120b-a12b:free",
+            "thinkingmachines/inkling:free",
+            "nvidia/nemotron-3.5-lightning:free",
+            "poolside/laguna-s-2.1:free"
 
     );
 
-    private String callAI(String prompt) {
+    public boolean isConfigured() {
+        return apiKey != null && !apiKey.isBlank() && !apiKey.equals("YOUR_OPENROUTER_API_KEY");
+    }
+
+    /**
+     * Learn Hub — detailed teaching answer for any topic the user asks about.
+     */
+    public String learnAnswer(String question, String topic) {
+        if (question == null || question.isBlank()) throw new IllegalArgumentException("Question required");
+        String context = (topic == null || topic.isBlank()) ? "" : "Focus area: " + topic + ".\n";
+        String prompt = """
+You are a world-class university professor and senior software engineer writing for a placement-preparation platform.
+
+Topic / question from the student:
+%s%s
+
+Write a COMPLETE, DETAILED, PROFESSIONAL lesson in plain text (no markdown syntax like # or ```).
+
+Structure your answer EXACTLY like this:
+
+1. OPENING
+One short paragraph explaining what the topic is and why it matters in real engineering and interviews.
+
+2. CORE CONCEPTS
+Explain every key idea step by step in depth. Define terms precisely. Use analogies where helpful. Use plain-text formatting:
+- Use CAPS or *asterisks* only for emphasis of key terms
+- Number your points 1. 2. 3.
+- Keep paragraphs short and readable
+
+3. HOW IT WORKS
+Walk through the mechanism / algorithm / flow in detail, step by step.
+
+4. EXAMPLE
+Give ONE complete, correct, runnable code example. Label the language. Indent the code with 4 spaces on every line. Explain the code line by line after the block.
+
+5. COMMON MISTAKES & INTERVIEW TIPS
+List 3-5 mistakes candidates make and how to avoid them. Add 2-3 likely interview questions with one-line answers.
+
+6. QUICK RECAP
+5 bullet takeaways.
+
+Rules:
+- Always give deep, textbook-quality detail — never surface level.
+- Plain text only. NO markdown headers (#), NO triple backticks, NO tables.
+- Code examples must be indented by 4 spaces.
+- Minimum 400 words. Be thorough but organized.
+- If the student asked in simple words, still answer with full professional depth.
+""".formatted(context, question);
+        try {
+            String answer = callAIRaw(prompt);
+            if (answer != null && !answer.isBlank()) return answer;
+        } catch (Exception e) {
+            System.out.println("[AI] learn failed: " + e.getMessage());
+        }
+        return "AI is currently offline. Please try again in a moment, or browse the built-in topics while we reconnect to the model.";
+    }
+
+    /**
+     * Calls the AI provider. Returns null when no key is configured
+     * or every model failed, so callers can fall back to offline mode.
+     */
+    private String callAIRaw(String prompt) {
+
+        if (!isConfigured()) {
+            System.out.println("[AI] OPENROUTER_API_KEY not configured - using offline mode");
+            return null;
+        }
 
         String url = "https://openrouter.ai/api/v1/chat/completions";
 
@@ -169,19 +243,22 @@ public class GeminiService {
             }
             catch(Exception e){
 
-                System.out.println(model+" Failed");
+                System.out.println(model + " Failed: " + e.getClass().getSimpleName() + " - " + e.getMessage());
+
+                if (e instanceof org.springframework.web.client.HttpClientErrorException.Unauthorized
+                        || e instanceof org.springframework.web.client.HttpClientErrorException.Forbidden) {
+
+                    System.out.println("[AI] API key rejected by OpenRouter (401/403) - stopping model fallback");
+
+                    break;
+
+                }
 
             }
 
         }
 
-        return """
-                AI Service is currently unavailable.
-
-                Every free model failed.
-
-                Try again after a few minutes.
-                """;
+        return null;
     }
     // ================= INTERVIEW =================
 
@@ -190,7 +267,9 @@ public class GeminiService {
         return s.replace("\n", " ").replace("\r", " ").substring(0, Math.min(s.length(), 5000)).trim();
     }
 
-    public synchronized String askInterviewQuestion(String email, String answer) {
+    public synchronized String askInterviewQuestion(String email, String answer,
+                                                    String domain, String difficulty, Integer questionNumber,
+                                                    String topics) {
         if (email == null || email.isBlank()) throw new IllegalArgumentException("Email required");
         String safeAnswer = sanitize(answer);
         InterviewSession session = sessionRepository.findByUserEmail(email).orElseGet(() -> {
@@ -203,8 +282,14 @@ public class GeminiService {
         if (conversation == null) conversation = "";
         // Prevent unbounded growth - keep last 8000 chars
         if (conversation.length() > 8000) conversation = conversation.substring(conversation.length() - 8000);
-        String prompt = """
-You are an experienced Java interviewer.
+
+        String topicHint = (topics == null || topics.isBlank() || topics.equalsIgnoreCase("General"))
+                ? "" : "\nFocus topics (mix questions from these): " + topics + ".";
+
+        String reply = null;
+        if (isConfigured()) {
+            String prompt = """
+You are an experienced %s interviewer.
 Rules:
 1. Ask ONLY ONE interview question at a time.
 2. First evaluate the candidate's previous answer in 2-3 lines.
@@ -213,13 +298,34 @@ Rules:
 5. Never use **, ###, bullet formatting, or code blocks.
 6. Return plain text only.
 7. Keep the response under 120 words.
-8. Cover Java, OOP, Collections, Multithreading, DSA, DBMS, OS and Computer Networks.
+8. Difficulty level: %s.
+9. Tailor every question to this job role.
+10. NEVER reply with only a single word like Correct, Incorrect, Partial, Wrong or Right. Always give brief feedback AND the next question.%s
 Previous Conversation:
 """
-                + conversation
-                + "\n\nCandidate:\n"
-                + safeAnswer;
-        String reply = callAI(prompt);
+                    .formatted(domain == null ? "Java" : domain, difficulty == null ? "Medium" : difficulty, topicHint)
+                    + conversation
+                    + "\n\nCandidate:\n"
+                    + safeAnswer;
+            try {
+                reply = callAIRaw(prompt);
+            } catch (Exception e) {
+                System.out.println("[AI] interview chat failed: " + e.getMessage());
+                reply = null;
+            }
+        }
+
+        if (reply == null || reply.isBlank()) {
+            int qn = questionNumber == null ? 2 : questionNumber;
+            reply = offlineInterviewService.nextReply(domain, difficulty, qn, conversation, safeAnswer);
+        }
+
+        // Never return a bare verdict word as the interviewer reply
+        String trimmed = reply == null ? "" : reply.trim();
+        if (trimmed.matches("(?i)(correct|incorrect|partial|wrong|right)[.!]?")) {
+            reply = "Thanks for your answer. Let's move on — here's the next question.";
+        }
+
         conversation += "\nCandidate : " + safeAnswer;
         conversation += "\nInterviewer : " + reply;
         // Hard limit TEXT column
@@ -260,7 +366,24 @@ Previous Conversation:
 
                 """.formatted(question, answer);
 
-        return callAI(prompt);
+        String aiText = callAIRaw(prompt);
+        if (aiText != null) return aiText;
+
+        InterviewEvaluation eval = offlineInterviewService.evaluateAnswer(question, answer);
+        return """
+                ⭐ Score: %d/10 Technical | %d/10 Communication | %d/10 Confidence
+
+                ✅ Strengths
+                %s
+
+                ❌ Weaknesses
+                %s
+
+                📚 Suggestions
+                %s
+                """.formatted(
+                eval.getTechnicalScore(), eval.getCommunicationScore(), eval.getConfidenceScore(),
+                eval.getStrengths(), eval.getWeaknesses(), eval.getSuggestions());
     }
 
     // ================= INTERVIEW REPORT =================
@@ -302,7 +425,7 @@ Previous Conversation:
                 """
                         + conversation;
 
-        return callAI(prompt);
+        return callAIRaw(prompt);
     }
     // ================= CODE EXPLANATION =================
 
@@ -330,7 +453,8 @@ Previous Conversation:
                 %s
                 """.formatted(code);
 
-        return callAI(prompt);
+        String ai = callAIRaw(prompt);
+        return ai != null ? ai : offlineCodeService.explain(code);
 
     }
 
@@ -369,7 +493,8 @@ Previous Conversation:
                 Optimized Solution
                 """.formatted(question, code);
 
-        return callAI(prompt);
+        String ai = callAIRaw(prompt);
+        return ai != null ? ai : offlineCodeService.evaluateCode(question, code);
 
     }
 
@@ -395,7 +520,8 @@ Previous Conversation:
                 %s
                 """.formatted(code);
 
-        return callAI(prompt);
+        String aiOpt = callAIRaw(prompt);
+        return aiOpt != null ? aiOpt : offlineCodeService.optimize(code);
 
     }
 
@@ -421,7 +547,8 @@ Previous Conversation:
                 %s
                 """.formatted(code);
 
-        return callAI(prompt);
+        String aiBugs = callAIRaw(prompt);
+        return aiBugs != null ? aiBugs : offlineCodeService.bugs(code);
 
     }
 
@@ -449,7 +576,8 @@ Previous Conversation:
                 %s
                 """.formatted(code);
 
-        return callAI(prompt);
+        String aiTests = callAIRaw(prompt);
+        return aiTests != null ? aiTests : offlineCodeService.testCases(code);
 
     }
 
@@ -477,8 +605,27 @@ Previous Conversation:
                 %s
                 """.formatted(code);
 
-        return callAI(prompt);
+        String aiCx = callAIRaw(prompt);
+        return aiCx != null ? aiCx : offlineCodeService.complexity(code);
 
+    }
+
+    // Single-token time complexity for ranking saved solutions
+    public String complexityOnly(String code){
+        String prompt = """
+                Analyze the time complexity of the code below.
+                Reply with EXACTLY one token and nothing else, e.g.: O(1) or O(log n) or O(n) or O(n log n) or O(n^2) or O(n^3) or O(2^n)
+                Code:
+
+                %s
+                """.formatted(code);
+        String ai = callAIRaw(prompt);
+        java.util.regex.Matcher m = java.util.regex.Pattern.compile("O\\s*\\([^)]+\\)").matcher(ai == null ? "" : ai);
+        if (m.find()) return m.group().replaceAll("\\s+", "");
+        String offline = offlineCodeService.complexity(code);
+        java.util.regex.Matcher m2 = java.util.regex.Pattern.compile("O\\s*\\([^)]+\\)").matcher(offline == null ? "" : offline);
+        if (m2.find()) return m2.group().replaceAll("\\s+", "");
+        return "";
     }
 
     // ================= DRY RUN =================
@@ -501,7 +648,8 @@ Previous Conversation:
                 %s
                 """.formatted(code);
 
-        return callAI(prompt);
+        String aiDry = callAIRaw(prompt);
+        return aiDry != null ? aiDry : offlineCodeService.dryRun(code);
 
     }
 
@@ -529,7 +677,8 @@ Previous Conversation:
                 %s
                 """.formatted(code);
 
-        return callAI(prompt);
+        String aiHint = callAIRaw(prompt);
+        return aiHint != null ? aiHint : offlineCodeService.hint(code);
 
     }
 
@@ -540,7 +689,7 @@ Previous Conversation:
         String prompt = """
 You are a Senior Technical Interviewer.
 
-Evaluate the candidate.
+Evaluate the candidate's answer for correctness and quality.
 
 Return ONLY valid JSON.
 
@@ -548,10 +697,21 @@ Return ONLY valid JSON.
 "technicalScore":0,
 "communicationScore":0,
 "confidenceScore":0,
+"verdict":"Correct|Partial|Incorrect",
 "strengths":"",
 "weaknesses":"",
-"suggestions":""
+"suggestions":"",
+"correctAnswer":""
 }
+
+Rules for verdict:
+- "Correct": answer is accurate, complete, and on-topic.
+- "Partial": answer has some right points but misses key ideas or has minor errors.
+- "Incorrect": answer is mostly wrong, off-topic, or empty.
+
+correctAnswer: a concise model/ideal answer (2-6 sentences) the candidate SHOULD have given. Always include it, even if the candidate was Correct (use it as the reference answer). If the candidate was wrong or skipped, this is what they should have said.
+
+Scores are integers 0-10.
 
 Question:
 
@@ -562,11 +722,11 @@ Answer:
 %s
 """.formatted(question,answer);
 
-        return callAI(prompt);   // ✅
+        return callAIRaw(prompt);   // null when offline -> caller falls back
 
     }
     public String analyzeResume(String prompt) {
-        return callAI(prompt);
+        return callAIRaw(prompt);
     }
 
 }

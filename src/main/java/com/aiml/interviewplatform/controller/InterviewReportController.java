@@ -23,7 +23,7 @@ public class InterviewReportController {
         if (authentication == null || authentication.getName() == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("message","Unauthorized"));
         String email = authentication.getName();
         try {
-            InterviewReport r = reportService.generateReport(email);
+            InterviewReport r = reportService.generateReport(email, body);
             return ResponseEntity.ok(r);
         } catch (RuntimeException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", e.getMessage()));

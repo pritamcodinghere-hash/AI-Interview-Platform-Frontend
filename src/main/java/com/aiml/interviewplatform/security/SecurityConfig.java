@@ -50,10 +50,20 @@ public class SecurityConfig {
                                 "/api/gemini/**",
                                 "/api/resume/**",
                                 "/api/report/**",
-                                "/api/reports/**"
+                                "/api/reports/**",
+                                "/api/learn/**",
+                                "/api/weekly-test/**"
                         ).authenticated()
                         .anyRequest().authenticated()
                 )
+
+                // Return 401 (not 403) with JSON so the frontend can clear the
+                // stale token and redirect to login instead of dead-ending.
+                .exceptionHandling(ex -> ex.authenticationEntryPoint((request, response, authException) -> {
+                    response.setStatus(401);
+                    response.setContentType("application/json");
+                    response.getWriter().write("{\"message\":\"Unauthorized\"}");
+                }))
 
                 .addFilterBefore(
                         jwtAuthenticationFilter,

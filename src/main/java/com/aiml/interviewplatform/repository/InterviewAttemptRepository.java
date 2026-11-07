@@ -9,4 +9,6 @@ public interface InterviewAttemptRepository extends JpaRepository<InterviewAttem
 
     List<InterviewAttempt> findByUserEmail(String userEmail);
 
+    List<InterviewAttempt> findByUserEmailOrderByAttemptedAtDesc(String userEmail);
+
 }

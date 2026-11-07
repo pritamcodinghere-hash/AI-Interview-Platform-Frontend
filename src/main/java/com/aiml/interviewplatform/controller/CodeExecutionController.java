@@ -24,7 +24,7 @@ public class CodeExecutionController {
         if (request.getCode() == null || request.getCode().isBlank()) {
             return ResponseEntity.badRequest().body(Map.of("message", "Code is required"));
         }
-        String output = service.executeJava(request.getCode(), request.getInput());
+        String output = service.execute(request.getCode(), request.getInput(), request.getLanguage());
         boolean success = !output.startsWith("Compilation Error") && !output.startsWith("Runtime Error") && !output.startsWith("Security Error") && !output.startsWith("Exception");
         return ResponseEntity.ok(new RunCodeResponse(output, success));
     }
