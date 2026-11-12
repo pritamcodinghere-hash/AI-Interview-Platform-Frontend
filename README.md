@@ -101,6 +101,45 @@ Open http://localhost:8000, click **Create one free**, register, and start pract
 
 > Without `OPENROUTER_API_KEY`, the app still runs fully — code execution/grading work offline; every AI feature is disabled gracefully (or the interview falls back to voice-only/offline mode). Set the key to unlock the whole thing.
 
+## Deploying for free (₹0, no card needed)
+
+Stack: **Vercel** (frontend) + **Render** (backend) + **Neon** (Postgres). Everything stays on GitHub's free tiers with GitHub sign-in.
+
+### 1. Database — Neon
+1. https://neon.tech → Sign up with GitHub (free, no card).
+2. Create a project, e.g. `interview-platform`.
+3. From the connection string build the JDBC URL for step 2:
+   `jdbc:postgresql://<host>/<dbname>?sslmode=require` → `DATABASE_URL`
+4. Copy the username/password → `DB_USERNAME` / `DB_PASSWORD`.
+
+### 2. Backend — Render
+1. https://render.com → Sign up with GitHub.
+2. New → Web Service → connect this repository.
+3. Settings:
+   - **Root Directory:** `backend`
+   - **Build Command:** `./mvnw -DskipTests package`
+   - **Start Command:** `java -jar target/interviewplatform-0.0.1-SNAPSHOT.jar`
+   - **Instance Type:** Free
+4. Environment variables:
+   - `SPRING_PROFILES_ACTIVE=prod`
+   - `DATABASE_URL=jdbc:postgresql://<host>/<dbname>?sslmode=require`
+   - `DB_USERNAME=...`
+   - `DB_PASSWORD=...`
+   - `JWT_SECRET=<random 32+ characters>`
+   - `OPENROUTER_API_KEY=<your key>`
+5. Deploy. Your API will live at `https://<app>.onrender.com` (note: free instances sleep after ~15 min; first request after a break takes ~30–50 s).
+
+### 3. Frontend — Vercel
+1. https://vercel.com → Sign up with GitHub.
+2. Add New → Project → import this repository (framework preset: **Vite**, no env vars required).
+3. Edit `vercel.json` — replace `CHANGEME-YOUR-RENDER-APP` with your actual Render app name, commit and push.
+4. Redeploy. Your app is live at `https://<project>.vercel.app`.
+
+### Security notes
+- Real secrets never go in the repo — local `application.properties` uses placeholders; production values come from environment variables via `application-prod.properties`.
+- **Rotate your OpenRouter key before going live** — the old key appeared in plain text in the project history.
+- Local `application.properties` uses H2 with an insecure dev-only JWT default; production must set `JWT_SECRET`.
+
 ## Notes
 
 - `backend/data/` (runtime H2 files, user data) is intentionally **not tracked** in this repository — clone and run to create your own.
