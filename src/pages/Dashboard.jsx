@@ -31,6 +31,22 @@ const DIFFICULTIES = ["All", "Easy", "Medium", "Hard"];
 const TOPICS = ["All", ...new Set(questions.map(q => q.topic))];
 const DIFF_COLOR = { Easy: "#22c55e", Medium: "#f59e0b", Hard: "#ef4444" };
 
+const QUOTES = [
+  "The only thing standing between you and your dream job is preparation.",
+  "Small, consistent practice beats marathon cramming.",
+  "Interviewers hire people who explain their thinking, not just people who know the answer.",
+  "Every mock you sit for buys back your confidence on the real day.",
+  "150 problems. One placement. You've done harder things by sitting here.",
+  "Company decisions are won or lost in the 20 minutes before you're nervous.",
+  "Feedback is a gift. Absorb it fast, then go warmer.",
+];
+
+const dayOfYear = (d) => {
+  const start = new Date(d.getFullYear(), 0, 0);
+  return Math.floor((d - start) / 86400000);
+};
+
+
 function CodingBrowser({ onSelect }) {
   const [difficulty, setDifficulty] = useState("All");
   const [topic, setTopic] = useState("All");
@@ -169,6 +185,32 @@ function Dashboard() {
     navigate("/", { replace: true });
   };
 
+  const solve = overview.problemsSolved || 0;
+  const readiness = Math.min(100, Math.round(
+    Math.min(stats.totalInterviews / 3, 1) * 20 +
+    Math.min(solve / 20, 1) * 35 +
+    (Math.min(stats.averageScore || 0, 100) / 100) * 25 +
+    Math.min(stats.reports / 2, 1) * 10 +
+    Math.min(stats.resumes / 2, 1) * 10
+  ));
+  const readinessLabel =
+    readiness >= 80 ? "Placement Ready 🚀"
+    : readiness >= 60 ? "Interview-Ready"
+    : readiness >= 40 ? "Strong Candidate"
+    : readiness >= 20 ? "Building Up"
+    : "Just Starting";
+  const dailyQ = questions[dayOfYear(new Date()) % questions.length];
+  const quote = QUOTES[dayOfYear(new Date()) % QUOTES.length];
+  const CIRC = 2 * Math.PI * 54;
+  const journeySteps = [
+    { icon: "🚀", title: "Start", done: true },
+    { icon: "💻", title: "First Solve", done: solve >= 1 },
+    { icon: "🎙️", title: "First Mock", done: stats.totalInterviews >= 1 },
+    { icon: "📈", title: "25 Problems", done: solve >= 25 },
+    { icon: "👑", title: "Offer-Ready", done: readiness >= 80 },
+  ];
+  const firstPending = journeySteps.findIndex(s => !s.done);
+
   return (
     <div className="dashboard">
       <div className="dash-layout">
@@ -235,8 +277,9 @@ function Dashboard() {
                   <div className="ov-hero">
                     <div className="ov-hero-text">
                       <span className="hero-badge">✦ AI-powered preparation</span>
-                      <h1>Welcome back, {name} 👋</h1>
-                      <p>Practice AI interviews, solve coding questions and get placement ready.</p>
+                      <h1>Welcome back, {name} <span aria-hidden="true">👋</span></h1>
+                      <p>Placement season is closer than it feels — practice while it counts.</p>
+                      <p className="hero-quote">“{quote}”</p>
                       <div className="ov-hero-actions">
                         <button className="ov-btn ov-btn-primary" onClick={() => setActiveModule("interview")}>
                           <FaMicrophone /> Start Interview
@@ -245,20 +288,76 @@ function Dashboard() {
                           <FaCode /> Solve Problems
                         </button>
                       </div>
+                      <div className="hero-chips">
+                        <span>DSA</span><span>System Design</span><span>DBMS</span><span>OA Round</span><span>HR</span>
+                      </div>
                     </div>
-                    <div className="ov-hero-stats">
-                      <div className="ov-hero-stat">
-                        <span className="ov-hero-stat-value">{stats.totalInterviews}</span>
-                        <span className="ov-hero-stat-label">Interviews</span>
+                    <div className="readiness-wrap">
+                      <div className="readiness-label">Placement Readiness</div>
+                      <div className="readiness-ring">
+                        <svg viewBox="0 0 128 128" role="img" aria-label={`Placement readiness ${readiness} percent`}>
+                          <defs>
+                            <linearGradient id="readinessGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                              <stop offset="0%" stopColor="#60a5fa" />
+                              <stop offset="55%" stopColor="#a78bfa" />
+                              <stop offset="100%" stopColor="#f472b6" />
+                            </linearGradient>
+                          </defs>
+                          <circle className="ring-bg" cx="64" cy="64" r="54" strokeWidth="12" fill="none" />
+                          <circle
+                            className="ring-val" cx="64" cy="64" r="54" strokeWidth="12" fill="none"
+                            strokeDasharray={CIRC}
+                            strokeDashoffset={CIRC * (1 - readiness / 100)}
+                          />
+                        </svg>
+                        <div className="readiness-center">
+                          <b>{readiness}</b>
+                          <small>Ready</small>
+                        </div>
                       </div>
-                      <div className="ov-hero-stat">
-                        <span className="ov-hero-stat-value">{overview.problemsSolved}</span>
-                        <span className="ov-hero-stat-label">Solved</span>
+                      <div className="readiness-label" style={{ color: "#c4b5fd" }}>{readinessLabel}</div>
+                      <p className="readiness-hint">{readiness}% there — keep pushing, the finish line is in sight.</p>
+                    </div>
+                  </div>
+
+                  <div className="duo-grid">
+                    <div className="challenge-card">
+                      <div className="challenge-head">
+                        <h3>🧠 Today's Challenge</h3>
+                        <span className="challenge-badge">Daily Pick</span>
                       </div>
-                      <div className="ov-hero-stat">
-                        <span className="ov-hero-stat-value">{Math.round(stats.averageScore)}%</span>
-                        <span className="ov-hero-stat-label">Avg Score</span>
+                      <div className="challenge-title">#{dailyQ.id} — {dailyQ.title}</div>
+                      <p className="challenge-desc">{dailyQ.problem}</p>
+                      <div className="challenge-meta">
+                        <span>Difficulty: <b style={{ color: DIFF_COLOR[dailyQ.difficulty] || "#e2e8f0" }}>{dailyQ.difficulty}</b></span>
+                        <span>Topic: <b>{dailyQ.topic}</b></span>
+                        <span>Est. <b>15 min</b></span>
                       </div>
+                      <button className="challenge-cta" onClick={() => navigate(`/coding?q=${dailyQ.id}`)}>
+                        <FaPlay /> Solve Now →
+                      </button>
+                    </div>
+
+                    <div className="readiness-panel">
+                      <div className="ov-panel-head">
+                        <h3>🎯 Where You Stand</h3>
+                      </div>
+                      {[
+                        { label: "Coding Practice", value: Math.min(solve, 20), max: 20, color: "", note: `${Math.min(solve, 20)} of 20 solved` },
+                        { label: "AI Mock Interviews", value: Math.min(stats.totalInterviews, 3), max: 3, color: "v", note: `${Math.min(stats.totalInterviews, 3)} of 3 done` },
+                        { label: "Avg Interview Score", value: Math.round(stats.averageScore || 0), max: 100, color: "g", note: `${Math.round(stats.averageScore || 0)} / 100` },
+                        { label: "Reports Generated", value: Math.min(stats.reports, 2), max: 2, color: "y", note: `${Math.min(stats.reports, 2)} of 2` },
+                      ].map(p => (
+                        <div className="progress-row" key={p.label}>
+                          <div className="progress-row-top">
+                            <b>{p.label}</b>
+                            <span className="progress-note">{p.note}</span>
+                          </div>
+                          <div className="progress-track">
+                            <div className={`progress-fill ${p.color}`} style={{ width: `${(p.value / p.max) * 100}%` }} />
+                          </div>
+                        </div>
+                      ))}
                     </div>
                   </div>
 
@@ -303,6 +402,54 @@ function Dashboard() {
                       </div>
                       <div className="ov-stat-trend">Performance</div>
                     </div>
+                  </div>
+
+                  <div className="achieve-strip">
+                    {[
+                      { icon: "🎯", name: "First Step", hint: "Finish your first mock", unlocked: stats.totalInterviews >= 1 || solve >= 1 || stats.resumes >= 1 },
+                      { icon: "💻", name: "Rising Coder", hint: "Solve 5 problems", unlocked: solve >= 5 },
+                      { icon: "🏆", name: "Algorithm Pro", hint: "Solve 15 problems", unlocked: solve >= 15 },
+                      { icon: "🎙️", name: "Interviewer", hint: "Complete 2 AI interviews", unlocked: stats.totalInterviews >= 2 },
+                      { icon: "🔥", name: "Streak Starter", hint: "3-day practice streak", unlocked: overview.streakDays >= 3 },
+                      { icon: "👑", name: "Placement Ready", hint: "Readiness 70+", unlocked: readiness >= 70 },
+                    ].map(b => (
+                      <div key={b.name} className={`achieve-card ${b.unlocked ? "" : "achieve-locked"}`} title={b.hint}>
+                        <div className="achieve-icon">{b.icon}</div>
+                        <div className="achieve-name">{b.name}</div>
+                        <div className="achieve-hint">{b.unlocked ? "Unlocked ✓" : b.hint}</div>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="journey" aria-label="Your placement journey">
+                    {journeySteps.map((s, i) => {
+                      const state = s.done ? "journey-done" : i === firstPending ? "journey-current" : "";
+                      return (
+                        <div key={i} className={`journey-step ${state}`}>
+                          <div className="journey-icon">{s.icon}</div>
+                          <div className="journey-title">{s.title}</div>
+                          <div className="journey-check">{s.done ? "✓" : i + 1 + "/5"}</div>
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  <div className="recommend-row">
+                    <Link to="/resume" className="recommend-card">
+                      <h4>📄 Fresh Resume, Fresh Eyes</h4>
+                      <p>Get an instant ATS score and concrete suggestions so your resume clears the first filter — most rejections happen before a human reads them.</p>
+                      <span className="rc-cta">Analyze my resume →</span>
+                    </Link>
+                    <Link to="/interview-setup" className="recommend-card">
+                      <h4>🎙️ 3 Questions, One Voice Session</h4>
+                      <p>Your weakest signal usually isn't code — it's presence. A single voice interview exposes the filler words and pacing before it costs you an offer.</p>
+                      <span className="rc-cta">Practice speaking →</span>
+                    </Link>
+                    <Link to="/learn" className="recommend-card">
+                      <h4>📚 15-Minute Cheat Sheet</h4>
+                      <p>Confused by DBMS normalization or async/await? Ask the AI tutor — perfect for the 15 minutes before bed when you can't do a 60-minute study block.</p>
+                      <span className="rc-cta">Learn in 15 minutes →</span>
+                    </Link>
                   </div>
 
                   <div className="ov-panels">
