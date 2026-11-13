@@ -26,3 +26,7 @@ dist-ssr
 
 # H2 database - contains user data, never commit
 backend/data/
+
+# local artifacts / test binaries
+test-maxsub.exe
+*.pre-regen.bak
