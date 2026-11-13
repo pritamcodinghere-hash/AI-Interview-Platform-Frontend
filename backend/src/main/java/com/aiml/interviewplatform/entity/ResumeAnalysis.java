@@ -13,11 +13,9 @@ public class ResumeAnalysis {
     private String email;
 
     @Lob
-    @Column(columnDefinition = "LONGTEXT")
     private String resumeText;
 
     @Lob
-    @Column(columnDefinition = "LONGTEXT")
     private String analysis;
 
     private Integer atsScore;
