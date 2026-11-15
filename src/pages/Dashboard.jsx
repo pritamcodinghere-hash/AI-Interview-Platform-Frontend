@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import api from "../services/api";
 
 import ProgressChart from "../components/ProgressChart";
@@ -12,20 +12,9 @@ import {
   FaStar,
   FaFileAlt,
   FaPlay,
-  FaSignOutAlt,
 } from "react-icons/fa";
 
 import "../styles/Dashboard.css";
-
-const MODULES = [
-  { key: "overview", label: "Overview", icon: "🏠", color: "#3b82f6" },
-  { key: "interview", label: "AI Interview", icon: "🎤", color: "#8b5cf6" },
-  { key: "coding", label: "Coding Round", icon: "💻", color: "#22c55e" },
-  { key: "learn", label: "Learn", icon: "📚", color: "#06b6d4" },
-  { key: "weeklytest", label: "Weekly Test", icon: "🏆", color: "#f59e0b" },
-  { key: "reports", label: "Reports", icon: "📊", color: "#f59e0b" },
-  { key: "resume", label: "Resume Analyzer", icon: "📄", color: "#ef4444" },
-];
 
 const DIFFICULTIES = ["All", "Easy", "Medium", "Hard"];
 const TOPICS = ["All", ...new Set(questions.map(q => q.topic))];
@@ -135,7 +124,12 @@ function Dashboard() {
   try { name = localStorage.getItem("name") || "Guest"; } catch { name = "Guest"; }
 
   const navigate = useNavigate();
-  const [activeModule, setActiveModule] = useState("overview");
+  const [searchParams, setSearchParams] = useSearchParams();
+  const rawModule = searchParams.get("module") || "overview";
+  const activeModule = ["overview", "interview", "coding", "reports", "resume", "learn", "weeklytest"].includes(rawModule)
+    ? rawModule
+    : "overview";
+  const setActiveModule = (m) => setSearchParams(m === "overview" ? {} : { module: m });
   const [stats, setStats] = useState({ totalInterviews: 0, codingAttempts: 0, reports: 0, resumes: 0, averageScore: 0 });
   const [overview, setOverview] = useState({
     weeklyProgress: [],
@@ -176,15 +170,6 @@ function Dashboard() {
     navigate(`/coding?q=${q.id}`);
   };
 
-  const logout = () => {
-    try {
-      localStorage.removeItem("token");
-      localStorage.removeItem("email");
-      localStorage.removeItem("name");
-    } catch { /* ignore */ }
-    navigate("/", { replace: true });
-  };
-
   const solve = overview.problemsSolved || 0;
   const readiness = Math.min(100, Math.round(
     Math.min(stats.totalInterviews / 3, 1) * 20 +
@@ -212,51 +197,7 @@ function Dashboard() {
   const firstPending = journeySteps.findIndex(s => !s.done);
 
   return (
-    <div className="dashboard">
-      <div className="dash-layout">
-        {/* Left Sidebar */}
-        <aside className="dash-sidebar">
-          <div className="sidebar-greeting">
-            <div className="sidebar-avatar">{name[0]?.toUpperCase()}</div>
-            <div>
-              <div className="sidebar-name">{name}</div>
-              <div className="sidebar-role">Placement Prep</div>
-            </div>
-          </div>
-
-          <nav className="sidebar-nav">
-            {MODULES.map(m => (
-              <button
-                key={m.key}
-                className={`sidebar-item ${activeModule === m.key ? "sidebar-active" : ""}`}
-                onClick={() => {
-                  if (m.key === "resume") {
-                    navigate("/resume");
-                  } else if (m.key === "learn") {
-                    navigate("/learn");
-                  } else if (m.key === "weeklytest") {
-                    navigate("/weekly-test");
-                  } else {
-                    setActiveModule(m.key);
-                  }
-                }}
-              >
-                <span className="sidebar-icon">{m.icon}</span>
-                <span className="sidebar-label">{m.label}</span>
-                {activeModule === m.key && <span className="sidebar-bar" style={{ background: m.color }} />}
-              </button>
-            ))}
-          </nav>
-
-          <div className="sidebar-footer">
-            <button className="sidebar-link sidebar-logout" onClick={logout}>
-              <FaSignOutAlt /> Logout
-            </button>
-          </div>
-        </aside>
-
-        {/* Right Content */}
-        <main className="dash-content">
+    <>
           {error && <div className="alert alert-danger-custom">{error}</div>}
 
           {loading ? (
@@ -575,9 +516,7 @@ function Dashboard() {
 
             </>
           )}
-        </main>
-      </div>
-    </div>
+    </>
   );
 }
 

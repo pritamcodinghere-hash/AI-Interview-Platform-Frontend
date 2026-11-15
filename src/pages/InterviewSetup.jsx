@@ -1,7 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate, Link } from "react-router-dom";
-
-import Navbar from "../components/Navbar";
+import { useNavigate } from "react-router-dom";
 
 import "../styles/InterviewSetup.css";
 
@@ -107,7 +105,6 @@ function InterviewSetup() {
 
   return (
     <div className="page-shell">
-      <Navbar />
       <div className="page-container setup-page">
 
         <div className="page-header">
@@ -118,9 +115,7 @@ function InterviewSetup() {
               Configure your live AI mock interview — role, focus topics, timing and voice.
             </p>
           </div>
-          <div className="page-actions">
-            <Link to="/dashboard" className="btn-ghost">Dashboard</Link>
-          </div>
+          
         </div>
 
         {/* Role */}

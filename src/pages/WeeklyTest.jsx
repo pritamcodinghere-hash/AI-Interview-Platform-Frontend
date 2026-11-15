@@ -1,7 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import { Link, useNavigate } from "react-router-dom";
-
-import Navbar from "../components/Navbar";
+import { useNavigate  } from "react-router-dom";
 import api from "../services/api";
 import questions from "../data/questions";
 import allTestCases from "../data/testCases";
@@ -410,7 +408,6 @@ function WeeklyTest() {
   if (phase === "setup") {
     return (
       <div className="page-shell">
-        <Navbar />
         <div className="page-container wt-page">
           <div className="page-header">
             <div className="page-header-left">
@@ -420,9 +417,7 @@ function WeeklyTest() {
                 3 coding questions + 15 MCQs · proctored with webcam · mix difficulties freely per question.
               </p>
             </div>
-            <div className="page-actions">
-              <Link to="/dashboard" className="btn-ghost">Dashboard</Link>
-            </div>
+            
           </div>
 
           <div className="wt-setup fade-up">
@@ -502,7 +497,6 @@ function WeeklyTest() {
   if (phase === "intro") {
     return (
       <div className="page-shell">
-        <Navbar />
         <div className="page-container wt-page">
           <div className="wt-intro fade-up">
             <h1>📷 Camera check</h1>
@@ -544,7 +538,6 @@ function WeeklyTest() {
     const r = results || {};
     return (
       <div className="page-shell">
-        <Navbar />
         <div className="page-container wt-page">
           <div className="wt-results fade-up">
             <span className={`badge-soft ${r.autoSubmitted ? "badge-amber" : "badge-green"}`}>

@@ -1,8 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
 import api from "../services/api";
-
-import Navbar from "../components/Navbar";
 
 import "../styles/Report.css";
 
@@ -52,8 +49,6 @@ function Report() {
 
         <div className="page-shell">
 
-            <Navbar />
-
             <div className="page-container">
 
                 <div className="page-header">
@@ -90,11 +85,7 @@ function Report() {
 
                         </button>
 
-                        <Link to="/dashboard" className="btn-ghost">
-
-                            Dashboard
-
-                        </Link>
+                        
 
                     </div>
 

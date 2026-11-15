@@ -2,8 +2,6 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import api from "../services/api";
 
-import Navbar from "../components/Navbar";
-
 import "../styles/CodingHistory.css";
 
 function CodingHistory() {
@@ -34,8 +32,6 @@ function CodingHistory() {
 
     <div className="page-shell">
 
-      <Navbar />
-
       <div className="page-container">
 
         <div className="page-header">
@@ -62,11 +58,7 @@ function CodingHistory() {
 
             </Link>
 
-            <Link to="/dashboard" className="btn-ghost">
-
-              Dashboard
-
-            </Link>
+            
 
           </div>
 

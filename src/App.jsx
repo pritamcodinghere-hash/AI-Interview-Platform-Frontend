@@ -13,6 +13,7 @@ import CodingHistory from "./pages/CodingHistory";
 import ResumeAnalyzer from "./pages/ResumeAnalyzer";
 import Learn from "./pages/Learn";
 import WeeklyTest from "./pages/WeeklyTest";
+import AppLayout from "./components/AppLayout";
 import ProtectedRoute from "./components/ProtectedRoute";
 
 function App() {
@@ -26,7 +27,9 @@ function App() {
           path="/dashboard"
           element={
             <ProtectedRoute>
-              <Dashboard />
+              <AppLayout>
+                <Dashboard />
+              </AppLayout>
             </ProtectedRoute>
           }
         />
@@ -34,7 +37,9 @@ function App() {
           path="/interview-setup"
           element={
             <ProtectedRoute>
-              <InterviewSetup />
+              <AppLayout>
+                <InterviewSetup />
+              </AppLayout>
             </ProtectedRoute>
           }
         />
@@ -42,7 +47,9 @@ function App() {
           path="/interview"
           element={
             <ProtectedRoute>
-              <Interview />
+              <AppLayout>
+                <Interview />
+              </AppLayout>
             </ProtectedRoute>
           }
         />
@@ -50,7 +57,9 @@ function App() {
           path="/coding"
           element={
             <ProtectedRoute>
-              <Coding />
+              <AppLayout>
+                <Coding />
+              </AppLayout>
             </ProtectedRoute>
           }
         />
@@ -58,7 +67,9 @@ function App() {
           path="/coding-history"
           element={
             <ProtectedRoute>
-              <CodingHistory />
+              <AppLayout>
+                <CodingHistory />
+              </AppLayout>
             </ProtectedRoute>
           }
         />
@@ -66,7 +77,9 @@ function App() {
           path="/report"
           element={
             <ProtectedRoute>
-              <Report />
+              <AppLayout>
+                <Report />
+              </AppLayout>
             </ProtectedRoute>
           }
         />
@@ -74,7 +87,9 @@ function App() {
           path="/resume"
           element={
             <ProtectedRoute>
-              <ResumeAnalyzer />
+              <AppLayout>
+                <ResumeAnalyzer />
+              </AppLayout>
             </ProtectedRoute>
           }
         />
@@ -82,7 +97,9 @@ function App() {
           path="/learn"
           element={
             <ProtectedRoute>
-              <Learn />
+              <AppLayout>
+                <Learn />
+              </AppLayout>
             </ProtectedRoute>
           }
         />
@@ -90,7 +107,9 @@ function App() {
           path="/weekly-test"
           element={
             <ProtectedRoute>
-              <WeeklyTest />
+              <AppLayout>
+                <WeeklyTest />
+              </AppLayout>
             </ProtectedRoute>
           }
         />

@@ -1,7 +1,4 @@
 import { useState, useRef, useEffect, useMemo, useCallback } from "react";
-import { Link } from "react-router-dom";
-
-import Navbar from "../components/Navbar";
 import VoiceOrb from "../components/VoiceOrb";
 import useVoiceAssistant from "../hooks/useVoiceAssistant";
 import api from "../services/api";
@@ -176,7 +173,6 @@ function Learn() {
 
   return (
     <div className="page-shell">
-      <Navbar />
       <div className="page-container learn-page ai-learn">
 
         <div className="page-header">
@@ -187,9 +183,7 @@ function Learn() {
               Ask any topic — get a detailed, professional, interview-ready lesson instantly.
             </p>
           </div>
-          <div className="page-actions">
-            <Link to="/dashboard" className="btn-ghost">Dashboard</Link>
-          </div>
+          
         </div>
 
         <div className="ai-learn-layout fade-up">
