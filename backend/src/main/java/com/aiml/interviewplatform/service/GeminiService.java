@@ -66,42 +66,22 @@ public class GeminiService {
         if (question == null || question.isBlank()) throw new IllegalArgumentException("Question required");
         String context = (topic == null || topic.isBlank()) ? "" : "Focus area: " + topic + ".\n";
         String prompt = """
-You are a world-class university professor and senior software engineer writing for a placement-preparation platform.
+You are a placement coach answerering students on a prep platform. Match answer depth STRICTLY to what the student asked:
 
-Topic / question from the student:
-%s%s
+- Default / simple question ("what is X?", one-liner topic) → give a compact 2-4 sentence answer plus ONE tiny example (≤6 code lines). No sections, no padding, no fluff.
+- Moderate question ("how does X work?", "compare X and Y") → short paragraphs, ≤150 words, minimal-code example (or none).
+- EXPLICIT depth request ("in detail", "deep dive", "full lesson", "walk through", "interview-ready") → structured ~400 word answer: definition, how it works, one example, interview tips. Only then.
 
-Write a COMPLETE, DETAILED, PROFESSIONAL lesson in plain text (no markdown syntax like # or ```).
-
-Structure your answer EXACTLY like this:
-
-1. OPENING
-One short paragraph explaining what the topic is and why it matters in real engineering and interviews.
-
-2. CORE CONCEPTS
-Explain every key idea step by step in depth. Define terms precisely. Use analogies where helpful. Use plain-text formatting:
-- Use CAPS or *asterisks* only for emphasis of key terms
-- Number your points 1. 2. 3.
-- Keep paragraphs short and readable
-
-3. HOW IT WORKS
-Walk through the mechanism / algorithm / flow in detail, step by step.
-
-4. EXAMPLE
-Give ONE complete, correct, runnable code example. Label the language. Indent the code with 4 spaces on every line. Explain the code line by line after the block.
-
-5. COMMON MISTAKES & INTERVIEW TIPS
-List 3-5 mistakes candidates make and how to avoid them. Add 2-3 likely interview questions with one-line answers.
-
-6. QUICK RECAP
-5 bullet takeaways.
+Never do these:
+- No filler ("Great question", "That's a common interview topic")
+- No huge walls of text when a short answer suffices
+- No speculative extras — if they wanted more, they'll ask
+- No markdown syntax like # or tables
 
 Rules:
-- Always give deep, textbook-quality detail — never surface level.
-- Plain text only. NO markdown headers (#), NO triple backticks, NO tables.
-- Code examples must be indented by 4 spaces.
-- Minimum 400 words. Be thorough but organized.
-- If the student asked in simple words, still answer with full professional depth.
+- Always in plain teaching prose, numbered points only if natural.
+- Show code ONLY when it genuinely clarifies — when you do, wrap it in a fenced code block WITH a language tag (e.g. ```java). Keep code short.
+- Student question: %s%s
 """.formatted(context, question);
         try {
             String answer = callAIRaw(prompt);

@@ -18,11 +18,11 @@ const SUGGESTIONS = [
   "Explain React hooks in detail",
 ];
 
-// Minimal rich-text renderer: **bold**, `code`, indented code blocks, numbered/bullet lines
+// Markdown-lite renderer: fenced code blocks (```), inline code, bold, headings, lists,
+// and heuristic code detection for models that emit code without fences.
 function renderRich(text) {
-  const lines = text.split("\n");
+  const lines = (text || "").split("\n");
   const blocks = [];
-  let codeLines = null;
 
   const inline = (s, keyBase) => {
     const parts = s.split(/(\*\*[^*]+\*\*|\*[^*]+\*|`[^`]+`)/g);
@@ -35,32 +35,82 @@ function renderRich(text) {
     });
   };
 
-  lines.forEach((line, idx) => {
-    const isCodeLine = /^ {4}|\t/.test(line) && line.trim().length > 0;
-    if (isCodeLine) {
-      if (!codeLines) codeLines = [];
-      codeLines.push(line.replace(/^\t/, "    "));
-      return;
-    }
-    if (codeLines) {
-      blocks.push({ type: "code", text: codeLines.join("\n"), key: `c${idx}` });
-      codeLines = null;
-    }
-    if (!line.trim()) {
-      blocks.push({ type: "gap", key: `g${idx}` });
-      return;
-    }
-    blocks.push({ type: "p", text: line, key: `p${idx}` });
-  });
-  if (codeLines) blocks.push({ type: "code", text: codeLines.join("\n"), key: "cEnd" });
+  const push = (type, payload) => blocks.push({ type, ...payload, key: `${type}-${blocks.length}` });
 
-  return blocks.map(b => {
+  // Code-line heuristics for un-fenced code the model emits as prose
+  const CODE_START = /^(import |package |public |private |protected |static |class |interface |enum |void |int |long |String |boolean |char |double |float |short |byte |const |let |var |function |fn |func |Map<|List<|Set<|HashMap|TreeMap|HashSet|ArrayList|LinkedList|Arrays|Collections|Collection|Optional|Stream|System\.|console\.|print\(|println\(|fmt\.)/;
+  const looksCode = (line) => {
+    if (!line.trim()) return false;
+    if (CODE_START.test(line)) return true;
+    const t = line.trim();
+    return /[;{}]$/.test(t) && /[a-zA-Z_0-9]+\s*(\(|\.|=)/.test(t);
+  };
+  const LANG_TAG = /^(java|python|javascript|typescript|ts|js|go|rust|c|cpp|csharp|kotlin|scala|swift|sql|bash|shell|html|css)$/i;
+
+  let i = 0;
+  while (i < lines.length) {
+    const line = lines[i];
+    // Fenced code block (```lang or ```)
+    const fence = line.match(/^\s*```([a-zA-Z0-9+#-]*)\s*$/);
+    if (fence) {
+      const lang = fence[1] || "code";
+      i++;
+      const body = [];
+      while (i < lines.length && !/^\s*```\s*$/.test(lines[i])) { body.push(lines[i]); i++; }
+      i++; // consume closing fence
+      push("code", { lang, text: body.join("\n") });
+      continue;
+    }
+    // Language-tag line followed by code lines (e.g. "java\nSome.code();")
+    const tag = line.trim().match(LANG_TAG);
+    if (tag) {
+      const lang = tag[1].toLowerCase();
+      let j = i + 1;
+      const body = [];
+      // Skip one blank line if present between tag and code
+      while (j < lines.length && !lines[j].trim()) j++;
+      while (j < lines.length && (looksCode(lines[j]) || !lines[j].trim())) { body.push(lines[j]); j++; }
+      if (body.filter(l => l.trim()).length >= 2) {
+        push("code", { lang, text: body.join("\n").replace(/^\s*\r?\n+|\r?\n+\s*$/g, "") });
+        i = j;
+        continue;
+      }
+    }
+    // Legacy: 4-space indented code block (for safety)
+    const indentRe = /^( {1,4}|\t)\S/;
+    if (indentRe.test(line) && line.trim()) {
+      const body = [];
+      while (i < lines.length && (indentRe.test(lines[i]) || !lines[i].trim())) { body.push(lines[i].replace(/^( {1,4}|\t)/g, "")); i++; }
+      push("code", { lang: "code", text: body.join("\n").replace(/\r?\n$/, "") });
+      continue;
+    }
+    // Heuristic: 2+ consecutive code-looking lines become a code block
+    if (looksCode(line) && lines[i + 1] && (looksCode(lines[i + 1]) || lines[i + 1].trim() === "")) {
+      const body = [];
+      while (i < lines.length && (looksCode(lines[i]) || !lines[i].trim())) { body.push(lines[i]); i++; }
+      if (body.filter(l => looksCode(l)).length >= 2) { push("code", { lang: "code", text: body.join("\n").replace(/^\s*\r?\n+|\r?\n+\s*$/g, "") }); continue; }
+      body.forEach(l => push("p", { text: l }));
+      continue;
+    }
+    if (!line.trim()) { push("gap", {}); i++; continue; }
+    push("p", { text: line });
+    i++;
+  }
+
+  // Compact gaps (max one blank line)
+  const compacted = [];
+  for (const b of blocks) {
+    if (b.type === "gap" && compacted.length && compacted[compacted.length - 1].type === "gap") continue;
+    compacted.push(b);
+  }
+
+  return compacted.map(b => {
     if (b.type === "gap") return <div key={b.key} className="learn-gap" />;
     if (b.type === "code") {
       return (
         <div key={b.key} className="learn-code">
           <div className="learn-code-head">
-            <span className="learn-code-lang">code</span>
+            <span className="learn-code-lang">{b.lang}</span>
             <button
               className="learn-copy"
               onClick={() => navigator.clipboard?.writeText(b.text)}
@@ -73,8 +123,8 @@ function renderRich(text) {
       );
     }
     const t = b.text;
-    const isHeading = /^[0-9]+\.\s+[A-Z][A-Z &/-]{3,}$/.test(t.trim())
-      || /^(OPENING|CORE CONCEPTS|HOW IT WORKS|EXAMPLE|COMMON MISTAKES|QUICK RECAP|INTRO)/i.test(t.trim());
+    const isHeading = /^(OPENING|CORE CONCEPTS|HOW IT WORKS|EXAMPLE|COMMON MISTAKES|QUICK RECAP|INTRO|RECAP)\b/i.test(t.trim())
+      || /^\d+\.\s+[A-Z][A-Z &/-]{2,}$/.test(t.trim());
     const isBullet = /^(\d+\.|[-•*])\s+/.test(t.trim());
 
     if (isHeading) return <h3 key={b.key} className="learn-h">{t}</h3>;
@@ -87,7 +137,7 @@ function Learn() {
   const [messages, setMessages] = useState([
     {
       role: "ai",
-      text: "👋 Welcome to the **AI Learn Hub**.\n\nAsk me ANYTHING — Java, DSA, DBMS, OS, React, System Design, HR topics, or anything else you're preparing for.\n\nI'll give you a complete, detailed, interview-ready lesson with examples and code.\n\nWhat topic should we cover today?"
+      text: "👋 Welcome to the **AI Learn Hub**.\n\nAsk me ANYTHING — Java, DSA, DBMS, OS, React, System Design, HR topics, or anything else you're preparing for.\n\nShort answers by default — say \"in detail\", \"deep dive\" or \"full lesson\" when you want the complete breakdown.\n\nWhat would you like to learn today?"
     }
   ]);
   const [input, setInput] = useState("");
@@ -159,7 +209,16 @@ function Learn() {
   }, [voice.state]);
 
   useEffect(() => {
-    if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    const el = scrollRef.current;
+    if (!el) return;
+    const msgs = el.querySelectorAll(".learn-msg");
+    const last = msgs[msgs.length - 1];
+    if (!last) return;
+    const elRect = el.getBoundingClientRect();
+    const lastRect = last.getBoundingClientRect();
+    // Align the START of the newest message with the top of the chat viewport so
+    // the reader begins from the beginning (not the end) of long answers.
+    el.scrollTop = el.scrollTop + (lastRect.top - elRect.top) - 6;
   }, [messages, loading]);
 
   const onKey = (e) => {
@@ -180,7 +239,7 @@ function Learn() {
             <span className="badge-soft badge-blue">📚 AI Learn Hub</span>
             <h1 className="page-title">Learn Anything with AI</h1>
             <p className="page-subtitle">
-              Ask any topic — get a detailed, professional, interview-ready lesson instantly.
+              Ask any topic — short answers by default, detailed lessons only when you ask for them.
             </p>
           </div>
           
@@ -263,7 +322,7 @@ function Learn() {
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={onKey}
-                placeholder={voice.state !== "idle" ? "Listening… or type here" : "Ask anything… e.g. Explain B-Trees with a Java example"}
+                placeholder={voice.state !== "idle" ? "Listening… or type here" : "Ask anything… e.g. What is a HashMap? (add 'in detail' for a full lesson)"}
                 disabled={loading}
               />
               <button className="btn-grad learn-send" onClick={() => sendRef.current()} disabled={loading || !input.trim()}>
