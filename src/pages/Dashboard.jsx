@@ -249,11 +249,6 @@ function Dashboard() {
           </nav>
 
           <div className="sidebar-footer">
-            <Link to="/learn" className="sidebar-link">📚 Learn</Link>
-            <Link to="/weekly-test" className="sidebar-link">🏆 Weekly Test</Link>
-            <Link to="/coding-history" className="sidebar-link">🕘 Coding History</Link>
-            <Link to="/report" className="sidebar-link">🎤 Interview History</Link>
-            <Link to="/interview-setup" className="sidebar-link">🎯 Quick Setup</Link>
             <button className="sidebar-link sidebar-logout" onClick={logout}>
               <FaSignOutAlt /> Logout
             </button>
