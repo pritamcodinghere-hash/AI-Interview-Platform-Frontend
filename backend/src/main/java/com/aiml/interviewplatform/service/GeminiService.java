@@ -33,16 +33,13 @@ public class GeminiService {
     @Autowired
     private OfflineCodeService offlineCodeService;
 
-    // Free model fallback list (verified against https://openrouter.ai/api/v1/models)
+    // 2026-11 refresh: current, reliable cheap models (flash family cheaper than GPT; curated fallbacks)
     private final List<String> MODELS = List.of(
-
-            "google/gemma-4-31b-it:free",
-            "nvidia/nemotron-3-super-120b-a12b:free",
-            "thinkingmachines/inkling:free",
-            "nvidia/nemotron-3.5-lightning:free",
-            "poolside/laguna-s-2.1:free"
-
-    );
+    "google/gemini-2.5-flash-lite",
+    "openai/gpt-4o-mini",
+    "deepseek/deepseek-chat",
+    "anthropic/claude-haiku-4.5"
+);
 
     public boolean isConfigured() {
         return apiKey != null && !apiKey.isBlank() && !apiKey.equals("YOUR_OPENROUTER_API_KEY");
