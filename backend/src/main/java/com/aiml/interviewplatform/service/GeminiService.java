@@ -35,9 +35,23 @@ public class GeminiService {
 
     // 2026-11 refresh: current, reliable cheap models (flash family cheaper than GPT; curated fallbacks)
     private final List<String> MODELS = List.of(
+    "inclusionai/ling-3.2-flash:free",
+    "baidu/ernie-5.5-flash-preview:free",
+    "thinkingmachines/inkling-2-small:free",
+    "particle-ai/particle-1:free",
+    "nvidia/nemotron-3.5-lightning:free",
+    "nvidia/nemotron-3.5-super-vl:free",
+    "google/gemma-4-26b-a4b-it:free",
+    "google/gemma-4-31b-it:free",
+    "dots-studio/dots-3-note-preview:free",
+    "nvidia/nemotron-3-ultra-550b-a55b:free",
+    "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free",
+    "cohere/north-mini-code:free",
+    "recursive/flint-v1.0:free",
+    "liquid/lfm-3-1.7b:free",
+    "deepseek/deepseek-chat",
     "google/gemini-2.5-flash-lite",
     "openai/gpt-4o-mini",
-    "deepseek/deepseek-chat",
     "anthropic/claude-haiku-4.5"
 );
 
